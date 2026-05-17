@@ -10,6 +10,7 @@ use App\Controllers\DebtController;
 use App\Controllers\GoalController;
 use App\Controllers\SettingController;
 use App\Controllers\TransactionController;
+use App\Controllers\UpdateController;
 use App\Core\Router;
 
 require dirname(__DIR__) . '/app/bootstrap.php';
@@ -39,5 +40,7 @@ $router->get('/alerts', [AlertController::class, 'index']);
 $router->post('/alerts/read', [AlertController::class, 'read']);
 $router->get('/settings', [SettingController::class, 'index']);
 $router->post('/settings', [SettingController::class, 'update']);
+$router->get('/updates', [UpdateController::class, 'index']);
+$router->post('/updates/apply', [UpdateController::class, 'apply']);
 
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);

@@ -12,3 +12,9 @@
   <div class="field"><label>Aylik Gelir</label><input name="monthly_income" data-money inputmode="decimal" value="<?= e($user['monthly_income']) ?>"></div>
   <button type="submit">Kaydet</button>
 </form>
+
+<section class="card" style="max-width:520px;margin-top:18px">
+  <h2>Sistem</h2>
+  <p class="muted">GitHub uzerinden yeni surum kontrolu ve DirectAdmin guncellemesi.</p>
+  <a class="button secondary" href="/updates">Akilli Guncelleme</a>
+</section>

@@ -190,6 +190,17 @@ button, input, select, textarea { font: inherit; }
 .page-head { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 30px 0 18px; }
 .page-head h1 { margin: 0; font-size: clamp(28px, 4vw, 44px); }
 .page-head p { margin: 6px 0 0; color: var(--muted); }
+.code-block {
+  overflow: auto;
+  margin: 12px 0 0;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(0,0,0,.22);
+  color: var(--text);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
 
 @media (max-width: 860px) {
   .container { width: min(100% - 22px, 760px); }
