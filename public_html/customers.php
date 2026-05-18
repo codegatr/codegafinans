@@ -97,38 +97,74 @@ function cari_statement_totals(array $rows): array
     return [$debit, $credit, $debit - $credit];
 }
 
+function cari_doc_period(?string $from, ?string $to): string
+{
+    return ($from ? tr_date($from) : 'Ilk kayit') . ' - ' . ($to ? tr_date($to) : 'Bugun');
+}
+
+function cari_document_styles(): string
+{
+    return 'body{margin:0;background:#eef2f7;color:#0f172a;font-family:Arial,sans-serif}.bar{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:14px 22px;background:#fff;border-bottom:1px solid #e5e7eb}.page{max-width:980px;margin:24px auto;background:#fff;padding:30px;box-shadow:0 18px 50px rgba(15,23,42,.12)}.btn{border:0;background:#2563eb;color:#fff;padding:10px 14px;border-radius:8px;font-weight:700;cursor:pointer;text-decoration:none}.btn.secondary{background:#0f172a}.doc-head{display:flex;justify-content:space-between;gap:20px;border-bottom:3px solid #0f172a;padding-bottom:18px;margin-bottom:18px}.brand{font-weight:800;font-size:22px}.doc-title{text-align:right}.doc-title h1{font-size:22px;margin:0 0 6px}.muted{color:#64748b}.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}.info{border:1px solid #e5e7eb;border-radius:10px;padding:12px}.info small{display:block;color:#64748b;margin-bottom:4px}.info strong{font-size:16px}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}.sum{border-radius:12px;padding:14px;color:#fff}.sum.debit{background:#2563eb}.sum.credit{background:#dc2626}.sum.net{background:#0f766e}.sum small{display:block;opacity:.86;margin-bottom:6px}.sum strong{font-size:21px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{padding:10px;border-bottom:1px solid #e5e7eb;font-size:13px;vertical-align:top}th{background:#f8fafc;text-transform:uppercase;font-size:11px;letter-spacing:.4px;color:#475569;text-align:left}.amount{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.foot{margin-top:18px;color:#64748b;font-size:12px;border-top:1px solid #e5e7eb;padding-top:12px}@media(max-width:700px){.page{margin:0;padding:18px}.doc-head,.info-grid,.summary{grid-template-columns:1fr;display:grid}.doc-title{text-align:left}.bar{align-items:flex-start;flex-direction:column}}@media print{body{background:#fff}.bar{display:none}.page{max-width:none;margin:0;padding:0;box-shadow:none}.sum{-webkit-print-color-adjust:exact;print-color-adjust:exact}}';
+}
+
+function cari_document_shell(string $title, string $body, string $backUrl): never
+{
+    while (ob_get_level() > 0) { ob_end_clean(); }
+    ?><!doctype html>
+    <html lang="tr">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title><?= e($title) ?></title>
+        <style><?= cari_document_styles() ?></style>
+    </head>
+    <body>
+        <div class="bar">
+            <strong><?= e($title) ?></strong>
+            <div>
+                <button class="btn" onclick="window.print()">PDF / Yazdir</button>
+                <a class="btn secondary" href="<?= e($backUrl) ?>">Geri don</a>
+            </div>
+        </div>
+        <main class="page"><?= $body ?></main>
+    </body>
+    </html><?php
+    exit;
+}
+
 function cari_statement_html(array $customer, array $rows, ?string $from, ?string $to, array $user): string
 {
     [$debit, $credit, $balance] = cari_statement_totals($rows);
-    $period = ($from ? tr_date($from) : 'Ilk kayit') . ' - ' . ($to ? tr_date($to) : 'Bugun');
+    $period = cari_doc_period($from, $to);
     $running = 0.0;
     ob_start();
     ?>
-    <div style="font-family:Arial,sans-serif;color:#0f172a;">
-        <h2 style="margin:0 0 4px;">Cari Hesap Ekstresi</h2>
-        <div style="color:#64748b;margin-bottom:18px;"><?= e($period) ?></div>
-        <table style="width:100%;border-collapse:collapse;margin-bottom:18px;">
-            <tr>
-                <td style="padding:8px;border:1px solid #e5e7eb;"><strong>Cari</strong><br><?= e($customer['name']) ?></td>
-                <td style="padding:8px;border:1px solid #e5e7eb;"><strong>E-posta</strong><br><?= e($customer['email'] ?: '-') ?></td>
-                <td style="padding:8px;border:1px solid #e5e7eb;"><strong>Gonderen</strong><br><?= e($user['name'] ?? CF_APP_NAME) ?></td>
-            </tr>
-        </table>
-        <table style="width:100%;border-collapse:collapse;margin-bottom:18px;">
-            <tr>
-                <td style="padding:10px;border:1px solid #e5e7eb;"><strong>Toplam Borc</strong><br><?= e(money($debit)) ?></td>
-                <td style="padding:10px;border:1px solid #e5e7eb;"><strong>Toplam Alacak</strong><br><?= e(money($credit)) ?></td>
-                <td style="padding:10px;border:1px solid #e5e7eb;"><strong>Net Bakiye</strong><br><?= e(money(abs($balance))) ?> <?= $balance >= 0 ? 'Alacak' : 'Borc' ?></td>
-            </tr>
-        </table>
-        <table style="width:100%;border-collapse:collapse;">
+    <style><?= cari_document_styles() ?></style>
+    <div>
+        <div class="doc-head">
+            <div>
+                <div class="brand"><?= e(CF_APP_NAME) ?></div>
+                <div class="muted">Cari hesap takip raporu</div>
+            </div>
+            <div class="doc-title">
+                <h1>Cari Hesap Ekstresi</h1>
+                <div class="muted"><?= e($period) ?></div>
+            </div>
+        </div>
+        <div class="info-grid">
+            <div class="info"><small>Cari</small><strong><?= e($customer['name']) ?></strong></div>
+            <div class="info"><small>E-posta / Telefon</small><strong><?= e(($customer['email'] ?: '-') . ' / ' . ($customer['phone'] ?: '-')) ?></strong></div>
+            <div class="info"><small>Raporu Hazirlayan</small><strong><?= e($user['name'] ?? CF_APP_NAME) ?></strong></div>
+        </div>
+        <div class="summary">
+            <div class="sum debit"><small>Toplam Borc</small><strong><?= e(money($debit)) ?></strong></div>
+            <div class="sum credit"><small>Toplam Alacak / Odeme</small><strong><?= e(money($credit)) ?></strong></div>
+            <div class="sum net"><small>Net Durum</small><strong><?= e(money(abs($balance))) ?> <?= $balance >= 0 ? 'Alacak' : 'Borc' ?></strong></div>
+        </div>
+        <table>
             <thead>
             <tr>
-                <th align="left" style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;">Tarih</th>
-                <th align="left" style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;">Aciklama</th>
-                <th align="right" style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;">Borc</th>
-                <th align="right" style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;">Alacak</th>
-                <th align="right" style="padding:8px;border:1px solid #e5e7eb;background:#f8fafc;">Bakiye</th>
+                <th>Tarih</th><th>Islem / Aciklama</th><th class="amount">Borc</th><th class="amount">Alacak</th><th class="amount">Ara Bakiye</th>
             </tr>
             </thead>
             <tbody>
@@ -137,18 +173,76 @@ function cari_statement_html(array $customer, array $rows, ?string $from, ?strin
                 $running += $row['direction'] === 'debit' ? $amount : -$amount;
             ?>
                 <tr>
-                    <td style="padding:8px;border:1px solid #e5e7eb;"><?= e(tr_date($row['tx_date'])) ?></td>
-                    <td style="padding:8px;border:1px solid #e5e7eb;"><strong><?= e($row['title']) ?></strong><?php if ($row['note']): ?><br><span style="color:#64748b;"><?= e($row['note']) ?></span><?php endif; ?></td>
-                    <td align="right" style="padding:8px;border:1px solid #e5e7eb;"><?= $row['direction'] === 'debit' ? e(money($amount)) : '-' ?></td>
-                    <td align="right" style="padding:8px;border:1px solid #e5e7eb;"><?= $row['direction'] === 'credit' ? e(money($amount)) : '-' ?></td>
-                    <td align="right" style="padding:8px;border:1px solid #e5e7eb;"><?= e(money(abs($running))) ?> <?= $running >= 0 ? 'A' : 'B' ?></td>
+                    <td><?= e(tr_date($row['tx_date'])) ?></td>
+                    <td><strong><?= e($row['title']) ?></strong><?php if ($row['note']): ?><br><span class="muted"><?= e($row['note']) ?></span><?php endif; ?></td>
+                    <td class="amount"><?= $row['direction'] === 'debit' ? e(money($amount)) : '-' ?></td>
+                    <td class="amount"><?= $row['direction'] === 'credit' ? e(money($amount)) : '-' ?></td>
+                    <td class="amount"><?= e(money(abs($running))) ?> <?= $running >= 0 ? 'Alacak' : 'Borc' ?></td>
                 </tr>
             <?php endforeach; ?>
             <?php if (!$rows): ?>
-                <tr><td colspan="5" style="padding:12px;border:1px solid #e5e7eb;color:#64748b;">Bu donem icin hareket yok.</td></tr>
+                <tr><td colspan="5" class="muted">Bu donem icin hareket yok.</td></tr>
             <?php endif; ?>
             </tbody>
         </table>
+        <div class="foot">Bu ekstre bilgilendirme amaciyla olusturulmustur. Odeme, tahsilat ve mutabakat icin cari kayitlarinizi kontrol ediniz.</div>
+    </div>
+    <?php
+    return (string)ob_get_clean();
+}
+
+function cari_report_html(array $rows, ?string $from, ?string $to, array $user): string
+{
+    $period = cari_doc_period($from, $to);
+    $debit = 0.0; $credit = 0.0;
+    foreach ($rows as $row) {
+        $debit += (float)$row['debit_total'];
+        $credit += (float)$row['credit_total'];
+    }
+    $net = $debit - $credit;
+    ob_start();
+    ?>
+    <style><?= cari_document_styles() ?></style>
+    <div>
+        <div class="doc-head">
+            <div>
+                <div class="brand"><?= e(CF_APP_NAME) ?></div>
+                <div class="muted">Cari portfoy raporu</div>
+            </div>
+            <div class="doc-title">
+                <h1>Cari Raporu</h1>
+                <div class="muted"><?= e($period) ?></div>
+            </div>
+        </div>
+        <div class="info-grid">
+            <div class="info"><small>Raporu Hazirlayan</small><strong><?= e($user['name'] ?? CF_APP_NAME) ?></strong></div>
+            <div class="info"><small>Cari Sayisi</small><strong><?= count($rows) ?></strong></div>
+            <div class="info"><small>Olusturma Zamani</small><strong><?= e(date('d.m.Y H:i')) ?></strong></div>
+        </div>
+        <div class="summary">
+            <div class="sum debit"><small>Toplam Borc</small><strong><?= e(money($debit)) ?></strong></div>
+            <div class="sum credit"><small>Toplam Alacak / Odeme</small><strong><?= e(money($credit)) ?></strong></div>
+            <div class="sum net"><small>Net Portfoy</small><strong><?= e(money(abs($net))) ?> <?= $net >= 0 ? 'Alacak' : 'Borc' ?></strong></div>
+        </div>
+        <table>
+            <thead><tr><th>Cari</th><th>Iletisim</th><th class="amount">Borc</th><th class="amount">Alacak</th><th class="amount">Net Bakiye</th><th>Son Hareket</th></tr></thead>
+            <tbody>
+            <?php foreach ($rows as $row):
+                $balance = (float)$row['balance'];
+            ?>
+                <tr>
+                    <td><strong><?= e($row['name']) ?></strong><br><span class="muted"><?= e($row['type']) ?></span></td>
+                    <td><?= e($row['phone'] ?: '-') ?><br><span class="muted"><?= e($row['email'] ?: '-') ?></span></td>
+                    <td class="amount"><?= e(money($row['debit_total'])) ?></td>
+                    <td class="amount"><?= e(money($row['credit_total'])) ?></td>
+                    <td class="amount"><?= e(money(abs($balance))) ?> <?= $balance >= 0 ? 'Alacak' : 'Borc' ?></td>
+                    <td><?= $row['last_tx_date'] ? e(tr_date($row['last_tx_date'])) : '-' ?></td>
+                </tr>
+            <?php endforeach; ?>
+            <?php if (!$rows): ?><tr><td colspan="6" class="muted">Raporlanacak cari bulunamadi.</td></tr><?php endif; ?>
+            </tbody>
+        </table>
+        <div class="foot">Nakliye operasyonlarinda cari risk, tahsilat ve odeme takibini hizli okumak icin hazirlanmistir.</div>
     </div>
     <?php
     return (string)ob_get_clean();
@@ -158,6 +252,8 @@ $reportFrom = isset($_GET['from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (strin
 $reportTo = isset($_GET['to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$_GET['to']) ? (string)$_GET['to'] : null;
 $statementFrom = isset($_GET['statement_from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$_GET['statement_from']) ? (string)$_GET['statement_from'] : null;
 $statementTo = isset($_GET['statement_to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$_GET['statement_to']) ? (string)$_GET['statement_to'] : null;
+if ($reportFrom && $reportTo && $reportFrom > $reportTo) { [$reportFrom, $reportTo] = [$reportTo, $reportFrom]; }
+if ($statementFrom && $statementTo && $statementFrom > $statementTo) { [$statementFrom, $statementTo] = [$statementTo, $statementFrom]; }
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     $rows = cari_report_rows($uid, $reportFrom, $reportTo);
     while (ob_get_level() > 0) { ob_end_clean(); }
@@ -189,38 +285,13 @@ if (isset($_GET['statement']) && $_GET['statement'] === 'print') {
     $customer = cari_customer_or_fail($uid, $customerId);
     $rows = cari_statement_rows($uid, $customerId, $statementFrom, $statementTo);
     $html = cari_statement_html($customer, $rows, $statementFrom, $statementTo, $user);
-    while (ob_get_level() > 0) { ob_end_clean(); }
-    ?><!doctype html>
-    <html lang="tr">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Cari Ekstre - <?= e($customer['name']) ?></title>
-        <style>
-            body { margin: 0; background: #eef2f7; color: #0f172a; font-family: Arial, sans-serif; }
-            .bar { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 14px 22px; background: #fff; border-bottom: 1px solid #e5e7eb; }
-            .page { max-width: 960px; margin: 24px auto; background: #fff; padding: 28px; box-shadow: 0 18px 50px rgba(15,23,42,.12); }
-            .btn { border: 0; background: #2563eb; color: #fff; padding: 10px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; text-decoration: none; }
-            .btn.secondary { background: #0f172a; }
-            @media print {
-                body { background: #fff; }
-                .bar { display: none; }
-                .page { max-width: none; margin: 0; padding: 0; box-shadow: none; }
-            }
-        </style>
-    </head>
-    <body>
-        <div class="bar">
-            <strong><?= e($customer['name']) ?> cari ekstresi</strong>
-            <div>
-                <button class="btn" onclick="window.print()">PDF / Yazdir</button>
-                <a class="btn secondary" href="/customers.php?id=<?= (int)$customer['id'] ?>">Geri don</a>
-            </div>
-        </div>
-        <main class="page"><?= $html ?></main>
-    </body>
-    </html><?php
-    exit;
+    cari_document_shell('Cari Ekstre - ' . $customer['name'], $html, '/customers.php?id=' . (int)$customer['id']);
+}
+
+if (isset($_GET['report']) && $_GET['report'] === 'print') {
+    $rows = cari_report_rows($uid, $reportFrom, $reportTo);
+    $html = cari_report_html($rows, $reportFrom, $reportTo, $user);
+    cari_document_shell('Cari Raporu', $html, '/customers.php#cari-rapor');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -340,6 +411,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $customerId = intval_safe($_POST['customer_id'] ?? 0, 1);
         $from = isset($_POST['statement_from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$_POST['statement_from']) ? (string)$_POST['statement_from'] : null;
         $to = isset($_POST['statement_to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$_POST['statement_to']) ? (string)$_POST['statement_to'] : null;
+        if ($from && $to && $from > $to) { [$from, $to] = [$to, $from]; }
         $customer = cari_customer_or_fail($uid, $customerId);
         $email = trim((string)($customer['email'] ?? ''));
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -358,6 +430,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('danger', 'Mail gonderilemedi: ' . $e->getMessage());
         }
         cari_redirect($customerId);
+    }
+
+    if ($action === 'send_report_email') {
+        $from = isset($_POST['from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$_POST['from']) ? (string)$_POST['from'] : null;
+        $to = isset($_POST['to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$_POST['to']) ? (string)$_POST['to'] : null;
+        if ($from && $to && $from > $to) { [$from, $to] = [$to, $from]; }
+        $email = s($_POST['report_email'] ?? ($user['email'] ?? ''), 160);
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            flash('danger', 'Cari raporu icin gecerli bir alici e-posta adresi yazin.');
+            redirect('/customers.php#cari-rapor');
+        }
+        try {
+            $rows = cari_report_rows($uid, $from, $to);
+            $html = cari_report_html($rows, $from, $to, $user);
+            cf_send_mail($email, 'Cari Raporu - ' . cari_doc_period($from, $to), $html, 'Cari raporunuz HTML mesaj icerigindedir.');
+            audit('customer.report.email', $uid, null, 'email=' . $email);
+            flash('success', 'Cari raporu ' . $email . ' adresine gonderildi.');
+        } catch (Throwable $e) {
+            flash('danger', 'Cari raporu gonderilemedi: ' . $e->getMessage());
+        }
+        redirect('/customers.php#cari-rapor');
     }
 
     if ($action === 'archive_customer') {
@@ -460,7 +553,7 @@ require __DIR__ . '/../inc/header.php';
             <div class="muted">Secili tarih araligina gore borc, alacak ve net bakiye ozeti.</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button type="button" class="btn btn-ghost" onclick="window.print()">Yazdir</button>
+            <a class="btn btn-ghost" target="_blank" href="/customers.php?report=print<?= $reportFrom ? '&from=' . e($reportFrom) : '' ?><?= $reportTo ? '&to=' . e($reportTo) : '' ?>">PDF Rapor</a>
             <a class="btn btn-outline" href="/customers.php?export=csv<?= $reportFrom ? '&from=' . e($reportFrom) : '' ?><?= $reportTo ? '&to=' . e($reportTo) : '' ?>">CSV indir</a>
         </div>
     </div>
@@ -478,6 +571,21 @@ require __DIR__ . '/../inc/header.php';
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn btn-primary">Raporu Getir</button>
             <a class="btn btn-ghost" href="/customers.php#cari-rapor">Sifirla</a>
+        </div>
+    </form>
+    <form method="post" class="cf-form" data-once style="margin-top:14px;border-top:1px solid #eef0f4;padding-top:14px;">
+        <?= csrf_field() ?>
+        <input type="hidden" name="action" value="send_report_email">
+        <input type="hidden" name="from" value="<?= e($reportFrom ?? '') ?>">
+        <input type="hidden" name="to" value="<?= e($reportTo ?? '') ?>">
+        <div class="row">
+            <div>
+                <label>Rapor Mail Alicisi</label>
+                <input type="email" name="report_email" value="<?= e($user['email'] ?? '') ?>" placeholder="rapor@alan.com" required>
+            </div>
+            <div style="display:flex;align-items:end;">
+                <button class="btn btn-outline" style="width:100%;">Cari Raporunu Mail Gonder</button>
+            </div>
         </div>
     </form>
     <div class="cf-grid cf-grid-3" style="margin:16px 0;">
@@ -629,8 +737,8 @@ require __DIR__ . '/../inc/header.php';
                         <input type="text" name="amount" data-money required placeholder="0,00">
                     </div>
                 </div>
-                <div><label>Baslik</label><input type="text" name="title" required maxlength="160" placeholder="Orn: Fatura, odeme, tahsilat"></div>
-                <div><label>Not</label><input type="text" name="note" maxlength="500"></div>
+                <div><label>Islem Basligi</label><input type="text" name="title" required maxlength="160" placeholder="Orn: Sefer ucreti, mazot, navlun, tahsilat"></div>
+                <div><label>Aciklama</label><textarea name="note" maxlength="500" rows="3" placeholder="Plaka, sefer no, guzergah, yukleme/bosaltma veya odeme aciklamasi"></textarea></div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
                     <button class="btn btn-primary" name="direction" value="debit">Borc Kaydet</button>
                     <button class="btn btn-ghost" name="direction" value="credit">Alacak / Odeme Kaydet</button>

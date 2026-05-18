@@ -103,6 +103,7 @@ if (!defined('CF_MAIL_PORT'))      define('CF_MAIL_PORT',      587);
 if (!defined('CF_MAIL_USER'))      define('CF_MAIL_USER',      '');
 if (!defined('CF_MAIL_PASS'))      define('CF_MAIL_PASS',      '');
 if (!defined('CF_MAIL_SECURE'))    define('CF_MAIL_SECURE',    'tls');
+if (!defined('CF_MAIL_TIMEOUT'))   define('CF_MAIL_TIMEOUT',   15);
 if (!defined('CF_ADMIN_MAIL'))     define('CF_ADMIN_MAIL',     'yunus@codega.com.tr');
 
 /* --------------------------------------------------------------------------

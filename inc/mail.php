@@ -55,6 +55,21 @@ function cf_mail_setting(string $key, string $constant, string $default = ''): s
     return defined($constant) ? trim((string)constant($constant)) : $default;
 }
 
+function cf_mail_config(): array
+{
+    $user = cf_mail_setting('mail_user', 'CF_MAIL_USER');
+    return [
+        'host' => cf_mail_setting('mail_host', 'CF_MAIL_HOST'),
+        'port' => (int)(cf_mail_setting('mail_port', 'CF_MAIL_PORT', '587') ?: 587),
+        'user' => $user,
+        'pass' => cf_mail_setting('mail_pass', 'CF_MAIL_PASS'),
+        'secure' => strtolower(cf_mail_setting('mail_secure', 'CF_MAIL_SECURE', 'tls')),
+        'from' => cf_mail_setting('mail_from', 'CF_MAIL_FROM', $user),
+        'from_name' => cf_mail_setting('mail_from_name', 'CF_MAIL_FROM_NAME', CF_APP_NAME),
+        'timeout' => (int)(cf_mail_setting('mail_timeout', 'CF_MAIL_TIMEOUT', '15') ?: 15),
+    ];
+}
+
 function cf_send_mail(string $to, string $subject, string $html, ?string $text = null): bool
 {
     $to = trim($to);
@@ -62,25 +77,30 @@ function cf_send_mail(string $to, string $subject, string $html, ?string $text =
         throw new InvalidArgumentException('Gecerli bir alici e-posta adresi yok.');
     }
 
-    $host = cf_mail_setting('mail_host', 'CF_MAIL_HOST');
-    $port = (int)(cf_mail_setting('mail_port', 'CF_MAIL_PORT', '587') ?: 587);
-    $user = cf_mail_setting('mail_user', 'CF_MAIL_USER');
-    $pass = cf_mail_setting('mail_pass', 'CF_MAIL_PASS');
-    $secure = strtolower(cf_mail_setting('mail_secure', 'CF_MAIL_SECURE', 'tls'));
-    $from = cf_mail_setting('mail_from', 'CF_MAIL_FROM', $user);
-    $fromName = cf_mail_setting('mail_from_name', 'CF_MAIL_FROM_NAME', CF_APP_NAME);
+    $config = cf_mail_config();
+    $host = $config['host'];
+    $port = $config['port'];
+    $user = $config['user'];
+    $pass = $config['pass'];
+    $secure = $config['secure'];
+    $from = $config['from'];
+    $fromName = $config['from_name'];
+    $timeout = max(5, min(60, (int)$config['timeout']));
 
     if ($host === '' || $user === '' || $pass === '' || $from === '' || str_contains($pass, 'GMAIL-UYGULAMA')) {
-        throw new RuntimeException('SMTP ayarlari eksik. inc/config.local.php icinde CF_MAIL_HOST, CF_MAIL_USER ve CF_MAIL_PASS tanimlanmali.');
+        throw new RuntimeException('SMTP ayarlari eksik. Ayarlar > Mail / SMTP Ayarlari bolumunde sunucu, kullanici ve uygulama sifresini girin.');
     }
 
     $transport = $secure === 'ssl' ? 'ssl://' : '';
-    $socket = @stream_socket_client($transport . $host . ':' . $port, $errno, $errstr, 20, STREAM_CLIENT_CONNECT);
+    $target = $transport . $host . ':' . $port;
+    $socket = @stream_socket_client($target, $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT);
     if (!$socket) {
-        throw new RuntimeException('SMTP baglantisi kurulamadi: ' . $errstr);
+        $reason = $errstr ?: 'baglanti zaman asimi';
+        $hint = ' Denenen adres: ' . $host . ':' . $port . ' / ' . $secure . '. Gmail icin 587/tls veya 465/ssl deneyin. Hata surerse hosting firmanizdan dis SMTP cikis izni isteyin.';
+        throw new RuntimeException('SMTP baglantisi kurulamadi: ' . $reason . '.' . $hint);
     }
 
-    stream_set_timeout($socket, 20);
+    stream_set_timeout($socket, $timeout);
     try {
         cf_mail_expect($socket, [220]);
         cf_mail_write($socket, 'EHLO ' . (parse_url(CF_APP_URL, PHP_URL_HOST) ?: 'localhost'));

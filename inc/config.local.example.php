@@ -31,5 +31,6 @@ if (!defined('CF_MAIL_PORT'))  define('CF_MAIL_PORT', 587);
 if (!defined('CF_MAIL_USER'))  define('CF_MAIL_USER', 'donusyapmayin@gmail.com');
 if (!defined('CF_MAIL_PASS'))  define('CF_MAIL_PASS', 'GMAIL-UYGULAMA-SIFRESI');
 if (!defined('CF_MAIL_SECURE')) define('CF_MAIL_SECURE', 'tls');
+if (!defined('CF_MAIL_TIMEOUT')) define('CF_MAIL_TIMEOUT', 15);
 if (!defined('CF_MAIL_FROM')) define('CF_MAIL_FROM', 'donusyapmayin@gmail.com');
 if (!defined('CF_MAIL_FROM_NAME')) define('CF_MAIL_FROM_NAME', 'CODEGA Finans');

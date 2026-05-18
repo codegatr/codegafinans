@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.10 - 2026-05-18
+
+- SMTP zaman asimi hatalari icin daha acik tani mesaji ve 465/ssl alternatif yonlendirmesi eklendi.
+- Cari raporu ve cari hesap ekstresi PDF/mail ciktilari profesyonel dokuman sablonuyla yenilendi.
+- Cari raporu icin PDF Rapor ve mail gonderme akisina destek eklendi.
+- Mobil kullanim icin dokunmatik alanlar, form sirasi ve cari hizli hareket kaydi guclendirildi.
+- Borc / alacak kaydinda nakliye aciklamalari icin daha genis Aciklama alani eklendi.
+
 ## 1.0.9 - 2026-05-18
 
 - Yonetim paneli Mail / SMTP Ayarlari bolumune Test Maili Gonder aksiyonu eklendi.

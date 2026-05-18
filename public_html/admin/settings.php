@@ -66,6 +66,7 @@ $mailKnown = [
     'mail_host'      => ['label' => 'SMTP Sunucu',       'type' => 'text',     'placeholder' => 'smtp.gmail.com'],
     'mail_port'      => ['label' => 'SMTP Port',         'type' => 'number',   'placeholder' => '587'],
     'mail_secure'    => ['label' => 'Guvenlik',          'type' => 'text',     'placeholder' => 'tls'],
+    'mail_timeout'   => ['label' => 'Zaman Asimi Sn.',   'type' => 'number',   'placeholder' => '15'],
     'mail_user'      => ['label' => 'SMTP Kullanici',    'type' => 'email',    'placeholder' => 'donusyapmayin@gmail.com'],
     'mail_pass'      => ['label' => 'Uygulama Sifresi',  'type' => 'password', 'placeholder' => 'Bos birakirsaniz mevcut sifre korunur'],
     'mail_from'      => ['label' => 'Gonderen E-posta',  'type' => 'email',    'placeholder' => 'donusyapmayin@gmail.com'],
@@ -96,7 +97,7 @@ require __DIR__ . '/../../inc/admin_header.php';
     <div class="cf-card">
         <h3>Mail / SMTP Ayarları</h3>
         <p class="muted" style="font-size:12px;margin-top:-4px;">
-            Gmail icin SMTP sunucu <code>smtp.gmail.com</code>, port <code>587</code>, guvenlik <code>tls</code> kullanin. Sifre alanina Google uygulama sifresini yazin.
+            Gmail icin once <code>smtp.gmail.com</code> + <code>587</code> + <code>tls</code> deneyin. Zaman asimi alirsaniz <code>465</code> + <code>ssl</code> deneyin veya hosting firmanizdan dis SMTP cikis izni isteyin.
         </p>
         <form method="post" class="cf-form" data-once>
             <?= csrf_field() ?>
