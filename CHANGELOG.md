@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.3 - 2026-05-18
+
+- Uyelere ozel cari hesap modulu eklendi.
+- Her uye kendi musteri/tedarikci cari kartlarini acabilir.
+- Cari kartlara borc/alacak hareketleri, tahsilat/odeme ve bakiye takibi eklendi.
+- Cari hesaplar icin `cf_customers` ve `cf_customer_movements` migration'i eklendi.
+
 ## 1.0.2 - 2026-05-18
 
 - MySQL native prepared statement uyumlulugu icin tekrarlanan named placeholder kullanimi duzeltildi.

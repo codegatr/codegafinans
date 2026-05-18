@@ -294,8 +294,10 @@ a:hover { color: var(--cf-primary-2); }
 .cf-grid-3 { grid-template-columns: repeat(3, 1fr); }
 .cf-grid-4 { grid-template-columns: repeat(4, 1fr); }
 .cf-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.cf-cari-layout { grid-template-columns: minmax(280px,.85fr) minmax(0,1.6fr); align-items: start; }
 @media (max-width: 900px) {
     .cf-grid-3, .cf-grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .cf-cari-layout { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
     .cf-grid-3, .cf-grid-4, .cf-grid-2 { grid-template-columns: 1fr; }

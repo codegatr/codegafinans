@@ -44,6 +44,11 @@ $__sub = function_exists('subscription_latest_for') && !empty($_SESSION['user_id
                  stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 12h20"/></svg>
             Borç Kontrolü
         </a></li>
+        <li><a href="/customers.php" class="<?= trim(active('customers.php')) ?>">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+            Cariler
+        </a></li>
 
         <li class="cf-nav-section">Araçlar</li>
         <li><a href="/rates.php" class="<?= trim(active('rates.php')) ?>">
