@@ -23,9 +23,13 @@ if (!defined('CF_DEBUG'))      define('CF_DEBUG',     false);
 // GitHub Personal Access Token (Smart Update sırasında release indirme için)
 if (!defined('CF_UPDATE_GH_TOKEN')) define('CF_UPDATE_GH_TOKEN', 'ghp_xxx_buraya');
 
-// SMTP / mail ayarları
-if (!defined('CF_MAIL_HOST'))  define('CF_MAIL_HOST', 'mail.codega.com.tr');
-if (!defined('CF_MAIL_PORT'))  define('CF_MAIL_PORT', 465);
-if (!defined('CF_MAIL_USER'))  define('CF_MAIL_USER', 'finans@codega.com.tr');
-if (!defined('CF_MAIL_PASS'))  define('CF_MAIL_PASS', 'mail-sifresi');
-if (!defined('CF_MAIL_SECURE')) define('CF_MAIL_SECURE', 'ssl');
+// Gmail SMTP / mail ayarlari
+// Google hesabinda 2 adimli dogrulama acik olmali ve "Uygulama sifresi"
+// uretilmelidir. Normal Gmail parolanizi buraya yazmayin.
+if (!defined('CF_MAIL_HOST'))  define('CF_MAIL_HOST', 'smtp.gmail.com');
+if (!defined('CF_MAIL_PORT'))  define('CF_MAIL_PORT', 587);
+if (!defined('CF_MAIL_USER'))  define('CF_MAIL_USER', 'donusyapmayin@gmail.com');
+if (!defined('CF_MAIL_PASS'))  define('CF_MAIL_PASS', 'GMAIL-UYGULAMA-SIFRESI');
+if (!defined('CF_MAIL_SECURE')) define('CF_MAIL_SECURE', 'tls');
+if (!defined('CF_MAIL_FROM')) define('CF_MAIL_FROM', 'donusyapmayin@gmail.com');
+if (!defined('CF_MAIL_FROM_NAME')) define('CF_MAIL_FROM_NAME', 'CODEGA Finans');

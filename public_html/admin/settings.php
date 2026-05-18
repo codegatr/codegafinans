@@ -36,6 +36,8 @@ $known = [
     'contact_email' => ['label' => 'İletişim E-posta',  'type' => 'email'],
     'iban'          => ['label' => 'IBAN',               'type' => 'text'],
     'iban_name'     => ['label' => 'IBAN Hesap Sahibi', 'type' => 'text'],
+    'mail_from'      => ['label' => 'Gonderen E-posta',  'type' => 'email'],
+    'mail_from_name' => ['label' => 'Gonderen Adi',      'type' => 'text'],
     'maintenance'   => ['label' => 'Bakım Modu (0/1)',  'type' => 'text'],
 ];
 

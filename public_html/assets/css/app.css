@@ -581,3 +581,12 @@ a:hover { color: var(--cf-primary-2); }
     color: var(--cf-text-soft);
 }
 .cf-empty .icon { font-size: 36px; margin-bottom: 8px; opacity: .5; }
+
+@media print {
+    .cf-sidebar, .cf-topbar, .cf-page-head, form, .btn, .actions { display: none !important; }
+    .cf-app { display: block !important; }
+    .cf-main { min-height: auto !important; background: #fff !important; }
+    .cf-content { max-width: none !important; padding: 0 !important; }
+    .cf-card { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid; }
+    body { background: #fff !important; color: #000 !important; }
+}

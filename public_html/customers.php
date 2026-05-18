@@ -10,9 +10,72 @@ require_once __DIR__ . '/../inc/functions.php';
 $user = auth_require_active_subscription();
 $uid = (int)$user['id'];
 
+function cari_report_rows(int $userId, ?string $from = null, ?string $to = null): array
+{
+    $dateWhere = ' WHERE user_id = :mu';
+    $params = [':u' => $userId, ':mu' => $userId];
+    if ($from) {
+        $dateWhere .= ' AND tx_date >= :from';
+        $params[':from'] = $from;
+    }
+    if ($to) {
+        $dateWhere .= ' AND tx_date <= :to';
+        $params[':to'] = $to;
+    }
+
+    return db_all(
+        'SELECT c.id, c.name, c.type, c.phone, c.email,
+                COALESCE(ms.debit_total,0) AS debit_total,
+                COALESCE(ms.credit_total,0) AS credit_total,
+                COALESCE(ms.balance,0) AS balance,
+                ms.last_tx_date
+           FROM ' . t('customers') . ' c
+           LEFT JOIN (
+                SELECT customer_id,
+                       SUM(IF(direction="debit", amount, 0)) AS debit_total,
+                       SUM(IF(direction="credit", amount, 0)) AS credit_total,
+                       SUM(IF(direction="debit", amount, -amount)) AS balance,
+                       MAX(tx_date) AS last_tx_date
+                  FROM ' . t('customer_movements') . $dateWhere . '
+                 GROUP BY customer_id
+           ) ms ON ms.customer_id = c.id
+          WHERE c.user_id = :u AND c.is_active = 1
+          ORDER BY c.name',
+        $params
+    );
+}
+
 function cari_redirect(?int $id = null): never
 {
     redirect('/customers.php' . ($id ? '?id=' . $id : ''));
+}
+
+$reportFrom = isset($_GET['from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$_GET['from']) ? (string)$_GET['from'] : null;
+$reportTo = isset($_GET['to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$_GET['to']) ? (string)$_GET['to'] : null;
+if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+    $rows = cari_report_rows($uid, $reportFrom, $reportTo);
+    while (ob_get_level() > 0) { ob_end_clean(); }
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="cari-rapor-' . date('Ymd-His') . '.csv"');
+    echo "\xEF\xBB\xBF";
+    $out = fopen('php://output', 'w');
+    fputcsv($out, ['Cari', 'Tur', 'Telefon', 'E-posta', 'Borc', 'Alacak', 'Bakiye', 'Durum', 'Son Hareket'], ';');
+    foreach ($rows as $r) {
+        $balance = (float)$r['balance'];
+        fputcsv($out, [
+            $r['name'],
+            $r['type'],
+            $r['phone'],
+            $r['email'],
+            number_format((float)$r['debit_total'], 2, ',', '.'),
+            number_format((float)$r['credit_total'], 2, ',', '.'),
+            number_format(abs($balance), 2, ',', '.'),
+            $balance >= 0 ? 'Alacak' : 'Borc',
+            $r['last_tx_date'] ?: '',
+        ], ';');
+    }
+    fclose($out);
+    exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -182,6 +245,13 @@ foreach ($customers as $c) {
     $totalCredit += (float)$c['credit_total'];
 }
 $netBalance = $totalDebit - $totalCredit;
+$reportRows = cari_report_rows($uid, $reportFrom, $reportTo);
+$reportDebit = 0.0; $reportCredit = 0.0;
+foreach ($reportRows as $r) {
+    $reportDebit += (float)$r['debit_total'];
+    $reportCredit += (float)$r['credit_total'];
+}
+$reportNet = $reportDebit - $reportCredit;
 
 $pageTitle = 'Cariler';
 $pageHeader = 'Cari Hesaplar';
@@ -209,7 +279,74 @@ require __DIR__ . '/../inc/header.php';
 <div class="cf-page-head">
     <h2>Cariler</h2>
     <div class="actions">
+        <a href="#cari-rapor" class="btn btn-ghost">Cari Rapor</a>
         <a href="/customers.php?new=1" class="btn btn-primary">+ Yeni Cari</a>
+    </div>
+</div>
+
+<div id="cari-rapor" class="cf-card" style="margin-bottom:18px;">
+    <div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap;">
+        <div>
+            <h3 style="margin-bottom:4px;">Cari Rapor</h3>
+            <div class="muted">Secili tarih araligina gore borc, alacak ve net bakiye ozeti.</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button type="button" class="btn btn-ghost" onclick="window.print()">Yazdir</button>
+            <a class="btn btn-outline" href="/customers.php?export=csv<?= $reportFrom ? '&from=' . e($reportFrom) : '' ?><?= $reportTo ? '&to=' . e($reportTo) : '' ?>">CSV indir</a>
+        </div>
+    </div>
+    <form method="get" class="cf-form" style="margin-top:14px;">
+        <div class="row">
+            <div>
+                <label>Baslangic</label>
+                <input type="date" name="from" value="<?= e($reportFrom ?? '') ?>">
+            </div>
+            <div>
+                <label>Bitis</label>
+                <input type="date" name="to" value="<?= e($reportTo ?? '') ?>">
+            </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-primary">Raporu Getir</button>
+            <a class="btn btn-ghost" href="/customers.php#cari-rapor">Sifirla</a>
+        </div>
+    </form>
+    <div class="cf-grid cf-grid-3" style="margin:16px 0;">
+        <div class="cf-stat income">
+            <div class="label">Rapor Borc</div>
+            <div class="value"><?= money($reportDebit) ?></div>
+            <div class="sub">Carilere islenen borc</div>
+        </div>
+        <div class="cf-stat expense">
+            <div class="label">Rapor Alacak</div>
+            <div class="value"><?= money($reportCredit) ?></div>
+            <div class="sub">Odemeler / alacak kayitlari</div>
+        </div>
+        <div class="cf-stat <?= $reportNet >= 0 ? 'gold' : 'expense' ?>">
+            <div class="label">Rapor Net</div>
+            <div class="value"><?= money(abs($reportNet)) ?></div>
+            <div class="sub"><?= $reportNet >= 0 ? 'Tahsil edilecek' : 'Odenecek' ?></div>
+        </div>
+    </div>
+    <div class="cf-table-wrap">
+        <table class="cf-table" style="box-shadow:none;border-radius:10px;">
+            <thead><tr><th>Cari</th><th>Tur</th><th class="amount">Borc</th><th class="amount">Alacak</th><th class="amount">Bakiye</th><th>Son Hareket</th></tr></thead>
+            <tbody>
+            <?php foreach ($reportRows as $r):
+                $bal = (float)$r['balance'];
+            ?>
+                <tr>
+                    <td><strong><?= e($r['name']) ?></strong><div style="font-size:12px;color:var(--cf-muted);"><?= e($r['phone'] ?: '') ?> <?= e($r['email'] ?: '') ?></div></td>
+                    <td><?= e($r['type']) ?></td>
+                    <td class="amount income"><?= money($r['debit_total']) ?></td>
+                    <td class="amount expense"><?= money($r['credit_total']) ?></td>
+                    <td class="amount <?= $bal >= 0 ? 'income' : 'expense' ?>"><?= money(abs($bal)) ?> <?= $bal >= 0 ? 'Alacak' : 'Borc' ?></td>
+                    <td><?= $r['last_tx_date'] ? tr_date($r['last_tx_date']) : '-' ?></td>
+                </tr>
+            <?php endforeach; ?>
+            <?php if (!$reportRows): ?><tr><td colspan="6" class="muted">Raporlanacak cari bulunamadi.</td></tr><?php endif; ?>
+            </tbody>
+        </table>
     </div>
 </div>
 

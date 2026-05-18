@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.6 - 2026-05-18
+
+- Cari hesaplar ekranina tarih filtreli Cari Rapor eklendi.
+- Cari rapor icin yazdirma ve CSV indirme destegi eklendi.
+- Gmail SMTP ayar ornegi `donusyapmayin@gmail.com` ve uygulama sifresi akisi icin guncellendi.
+
 ## 1.0.5 - 2026-05-18
 
 - Smart Update uyumlulugu icin manifest tracked_paths dosya bazli hale getirildi.

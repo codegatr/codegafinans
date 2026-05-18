@@ -44,6 +44,15 @@ if (!defined('CF_DB_USER')) define('CF_DB_USER', 'veritabani_kullanicisi');
 if (!defined('CF_DB_PASS')) define('CF_DB_PASS', 'veritabani_sifresi');
 if (!defined('CF_APP_URL')) define('CF_APP_URL', 'https://alan-adiniz.com');
 if (!defined('CF_DEBUG'))   define('CF_DEBUG', false);
+
+// Gmail SMTP icin uygulama sifresi kullanin.
+if (!defined('CF_MAIL_HOST')) define('CF_MAIL_HOST', 'smtp.gmail.com');
+if (!defined('CF_MAIL_PORT')) define('CF_MAIL_PORT', 587);
+if (!defined('CF_MAIL_USER')) define('CF_MAIL_USER', 'donusyapmayin@gmail.com');
+if (!defined('CF_MAIL_PASS')) define('CF_MAIL_PASS', 'GMAIL-UYGULAMA-SIFRESI');
+if (!defined('CF_MAIL_SECURE')) define('CF_MAIL_SECURE', 'tls');
+if (!defined('CF_MAIL_FROM')) define('CF_MAIL_FROM', 'donusyapmayin@gmail.com');
+if (!defined('CF_MAIL_FROM_NAME')) define('CF_MAIL_FROM_NAME', 'CODEGA Finans');
 ```
 
 ## Ilk kurulum komutlari
