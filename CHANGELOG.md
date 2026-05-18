@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.8 - 2026-05-18
+
+- Yonetim paneli Ayarlar ekranina Mail / SMTP Ayarlari karti eklendi.
+- Mail gonderimi artik ayarlar tablosundaki SMTP degerlerini okuyacak hale getirildi.
+- SMTP uygulama sifresi bos gonderilirse mevcut sifre korunur ve ayar listesinde maskelenir.
+
 ## 1.0.7 - 2026-05-18
 
 - Cari kart detayina Cari Hesap Ekstresi bolumu eklendi.

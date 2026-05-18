@@ -41,6 +41,20 @@ function cf_mail_write($socket, string $command): void
     fwrite($socket, $command . "\r\n");
 }
 
+function cf_mail_setting(string $key, string $constant, string $default = ''): string
+{
+    try {
+        $row = db_one('SELECT value FROM ' . t('settings') . ' WHERE key_name=:k LIMIT 1', [':k' => $key]);
+        if ($row && trim((string)$row['value']) !== '') {
+            return trim((string)$row['value']);
+        }
+    } catch (Throwable $e) {
+        // Kurulum oncesi veya settings tablosu yoksa sabitlere dus.
+    }
+
+    return defined($constant) ? trim((string)constant($constant)) : $default;
+}
+
 function cf_send_mail(string $to, string $subject, string $html, ?string $text = null): bool
 {
     $to = trim($to);
@@ -48,13 +62,13 @@ function cf_send_mail(string $to, string $subject, string $html, ?string $text =
         throw new InvalidArgumentException('Gecerli bir alici e-posta adresi yok.');
     }
 
-    $host = defined('CF_MAIL_HOST') ? (string)CF_MAIL_HOST : '';
-    $port = defined('CF_MAIL_PORT') ? (int)CF_MAIL_PORT : 587;
-    $user = defined('CF_MAIL_USER') ? (string)CF_MAIL_USER : '';
-    $pass = defined('CF_MAIL_PASS') ? (string)CF_MAIL_PASS : '';
-    $secure = defined('CF_MAIL_SECURE') ? strtolower((string)CF_MAIL_SECURE) : 'tls';
-    $from = defined('CF_MAIL_FROM') ? (string)CF_MAIL_FROM : $user;
-    $fromName = defined('CF_MAIL_FROM_NAME') ? (string)CF_MAIL_FROM_NAME : CF_APP_NAME;
+    $host = cf_mail_setting('mail_host', 'CF_MAIL_HOST');
+    $port = (int)(cf_mail_setting('mail_port', 'CF_MAIL_PORT', '587') ?: 587);
+    $user = cf_mail_setting('mail_user', 'CF_MAIL_USER');
+    $pass = cf_mail_setting('mail_pass', 'CF_MAIL_PASS');
+    $secure = strtolower(cf_mail_setting('mail_secure', 'CF_MAIL_SECURE', 'tls'));
+    $from = cf_mail_setting('mail_from', 'CF_MAIL_FROM', $user);
+    $fromName = cf_mail_setting('mail_from_name', 'CF_MAIL_FROM_NAME', CF_APP_NAME);
 
     if ($host === '' || $user === '' || $pass === '' || $from === '' || str_contains($pass, 'GMAIL-UYGULAMA')) {
         throw new RuntimeException('SMTP ayarlari eksik. inc/config.local.php icinde CF_MAIL_HOST, CF_MAIL_USER ve CF_MAIL_PASS tanimlanmali.');

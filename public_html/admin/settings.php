@@ -14,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($key === '_token' || str_starts_with($key, '_')) continue;
         if (!preg_match('/^[a-z0-9_]+$/i', $key)) continue;
         $val = is_string($val) ? trim($val) : '';
+        if ($key === 'mail_pass' && $val === '') continue;
         if (cf_str_len($val) > 4000) $val = cf_str_sub($val, 0, 4000);
         db_exec(
             'INSERT INTO ' . t('settings') . ' (key_name, value)
@@ -36,9 +37,17 @@ $known = [
     'contact_email' => ['label' => 'İletişim E-posta',  'type' => 'email'],
     'iban'          => ['label' => 'IBAN',               'type' => 'text'],
     'iban_name'     => ['label' => 'IBAN Hesap Sahibi', 'type' => 'text'],
-    'mail_from'      => ['label' => 'Gonderen E-posta',  'type' => 'email'],
-    'mail_from_name' => ['label' => 'Gonderen Adi',      'type' => 'text'],
     'maintenance'   => ['label' => 'Bakım Modu (0/1)',  'type' => 'text'],
+];
+
+$mailKnown = [
+    'mail_host'      => ['label' => 'SMTP Sunucu',       'type' => 'text',     'placeholder' => 'smtp.gmail.com'],
+    'mail_port'      => ['label' => 'SMTP Port',         'type' => 'number',   'placeholder' => '587'],
+    'mail_secure'    => ['label' => 'Guvenlik',          'type' => 'text',     'placeholder' => 'tls'],
+    'mail_user'      => ['label' => 'SMTP Kullanici',    'type' => 'email',    'placeholder' => 'donusyapmayin@gmail.com'],
+    'mail_pass'      => ['label' => 'Uygulama Sifresi',  'type' => 'password', 'placeholder' => 'Bos birakirsaniz mevcut sifre korunur'],
+    'mail_from'      => ['label' => 'Gonderen E-posta',  'type' => 'email',    'placeholder' => 'donusyapmayin@gmail.com'],
+    'mail_from_name' => ['label' => 'Gonderen Adi',      'type' => 'text',     'placeholder' => 'CODEGA Finans'],
 ];
 
 $pageTitle  = 'Sistem Ayarları';
@@ -59,6 +68,31 @@ require __DIR__ . '/../../inc/admin_header.php';
                 </div>
             <?php endforeach; ?>
             <button class="btn btn-primary" style="justify-self:start;margin-top:6px;">Kaydet</button>
+        </form>
+    </div>
+
+    <div class="cf-card">
+        <h3>Mail / SMTP Ayarları</h3>
+        <p class="muted" style="font-size:12px;margin-top:-4px;">
+            Gmail icin SMTP sunucu <code>smtp.gmail.com</code>, port <code>587</code>, guvenlik <code>tls</code> kullanin. Sifre alanina Google uygulama sifresini yazin.
+        </p>
+        <form method="post" class="cf-form" data-once>
+            <?= csrf_field() ?>
+            <?php foreach ($mailKnown as $k => $meta): ?>
+                <div>
+                    <label><?= e($meta['label']) ?> <small style="color:var(--cf-muted);"><code><?= e($k) ?></code></small></label>
+                    <input
+                        type="<?= e($meta['type']) ?>"
+                        name="<?= e($k) ?>"
+                        value="<?= $k === 'mail_pass' ? '' : e($kv[$k] ?? '') ?>"
+                        placeholder="<?= e($meta['placeholder'] ?? '') ?>"
+                        maxlength="500">
+                    <?php if ($k === 'mail_pass' && !empty($kv[$k])): ?>
+                        <small class="muted">Kayitli uygulama sifresi korunuyor. Degistirmek icin yeni sifre yazin.</small>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+            <button class="btn btn-primary" style="justify-self:start;margin-top:6px;">Mail Ayarlarını Kaydet</button>
         </form>
     </div>
 
@@ -86,7 +120,8 @@ require __DIR__ . '/../../inc/admin_header.php';
                 <?php foreach ($rows as $r): ?>
                     <tr>
                         <td><code><?= e($r['key_name']) ?></code></td>
-                        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<?= e($r['value']) ?>"><?= e($r['value']) ?></td>
+                        <?php $displayValue = $r['key_name'] === 'mail_pass' ? '••••••••' : $r['value']; ?>
+                        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<?= e($displayValue) ?>"><?= e($displayValue) ?></td>
                         <td style="font-size:12px;color:var(--cf-muted);"><?= tr_datetime($r['updated_at']) ?></td>
                     </tr>
                 <?php endforeach; ?>
