@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.12 - 2026-05-18
+
+- Landing sayfasi defter.net benzeri teal hero, sade nav, uygulama onizleme kartlari, ozellikler ve fiyatlandirma akisi ile yenilendi.
+- Giris yapmayan ziyaretciler icin ana sayfadan IBAN / Havale / EFT bilgileri tamamen kaldirildi.
+- IBAN bilgileri yalnizca uye girisi gerektiren abonelik ekraninda ve yonetim ayarlarinda kalacak sekilde sinirlandi.
+
 ## 1.0.11 - 2026-05-18
 
 - budgets.php aylik butce sayfasinda 500 hatasini gideren SQL placeholder duzeltmesi (v1.0.2'de baska yerlerde duzeltilen ":c iki kere" ve ":u iki kere" pattern'i budgets.php icin de uygulandi).
