@@ -38,13 +38,13 @@ require __DIR__ . '/../inc/header.php';
 
 <?php if ($sub && $sub['status'] === 'trial'): ?>
     <div class="cf-flash warning">
-        🎁 <strong>Deneme süreniz devam ediyor.</strong>
+        <strong>Deneme süreniz devam ediyor.</strong>
         <?= tr_date($sub['current_period_end']) ?> tarihinde sona erecek.
         <a href="/subscription.php" style="color:#92400e;text-decoration:underline;">Aboneliği başlat</a>
     </div>
 <?php elseif ($sub && in_array($sub['status'], ['expired','past_due'], true)): ?>
     <div class="cf-flash danger">
-        ⚠️ Aboneliğiniz sona erdi.
+        Aboneliğiniz sona erdi.
         <a href="/subscription.php" style="color:#991b1b;text-decoration:underline;">Yenilemek için tıklayın</a>
     </div>
 <?php endif; ?>
@@ -72,7 +72,7 @@ require __DIR__ . '/../inc/header.php';
         <div class="label">Net Bakiye</div>
         <div class="value"><?= money($summary['balance']) ?></div>
         <div class="sub">
-            <?= $summary['balance'] >= 0 ? '↑ Pozitif' : '↓ Negatif' ?> nakit akışı
+        <?= $summary['balance'] >= 0 ? 'Pozitif' : 'Negatif' ?> nakit akışı
         </div>
     </div>
     <div class="cf-stat gold">
@@ -95,7 +95,7 @@ require __DIR__ . '/../inc/header.php';
         <span style="width:<?= min(100, (int)$summary['usage']) ?>%"></span>
     </div>
     <div style="font-size:13px;color:var(--cf-text-soft);margin-top:8px;">
-        %<?= (int)$summary['usage'] ?> kullanım · kalan
+        %<?= (int)$summary['usage'] ?> kullanım &middot; kalan
         <strong><?= money(max(0, $summary['budget'] - $summary['expense'])) ?></strong>
     </div>
 </div>
@@ -107,7 +107,7 @@ require __DIR__ . '/../inc/header.php';
         <h3>Kategori Bazlı Harcama</h3>
         <?php if (empty($cats)): ?>
             <div class="cf-empty">
-                <div class="icon">🪙</div>
+                <div class="icon">TL</div>
                 Bu ay için kayıtlı bir gider yok.<br>
                 <a class="btn btn-primary btn-sm" href="/transactions.php?new=1" style="margin-top:12px;">İlk Gideri Ekle</a>
             </div>
@@ -139,7 +139,7 @@ require __DIR__ . '/../inc/header.php';
                 </table>
             </div>
         <?php else: ?>
-            <div class="cf-empty"><div class="icon">📈</div>Trend için en az 2 aylık veri gerekli.</div>
+            <div class="cf-empty"><div class="icon">%</div>Trend için en az 2 aylık veri gerekli.</div>
         <?php endif; ?>
     </div>
 </div>
@@ -149,11 +149,11 @@ require __DIR__ . '/../inc/header.php';
     <div class="cf-card">
         <div class="cf-card-head">
             <h3 style="margin:0;">Aktif Tasarruf Hedefleri</h3>
-            <a href="/goals.php" style="font-size:13px;">Tümü →</a>
+            <a href="/goals.php" style="font-size:13px;">Tümü &rarr;</a>
         </div>
         <?php if (empty($goals)): ?>
             <div class="cf-empty">
-                <div class="icon">🎯</div>
+                <div class="icon">H</div>
                 Hedef tanımlanmamış.<br>
                 <a class="btn btn-success btn-sm" href="/goals.php?new=1" style="margin-top:10px;">Hedef Oluştur</a>
             </div>
@@ -167,7 +167,7 @@ require __DIR__ . '/../inc/header.php';
                 <div class="cf-progress" style="margin-top:6px;">
                     <span style="width:<?= $pct ?>%;background:<?= e($g['color']) ?>;"></span>
                 </div>
-                <small style="color:var(--cf-text-soft);">%<?= $pct ?> tamamlandı<?php if ($g['deadline']): ?> · vade <?= tr_date($g['deadline']) ?><?php endif; ?></small>
+                <small style="color:var(--cf-text-soft);">%<?= $pct ?> tamamlandı<?php if ($g['deadline']): ?> &middot; vade <?= tr_date($g['deadline']) ?><?php endif; ?></small>
             </div>
         <?php endforeach; endif; ?>
     </div>
@@ -175,7 +175,7 @@ require __DIR__ . '/../inc/header.php';
     <div class="cf-card">
         <div class="cf-card-head">
             <h3 style="margin:0;">Akıllı Uyarılar</h3>
-            <a href="/alerts.php" style="font-size:13px;">Tümü →</a>
+            <a href="/alerts.php" style="font-size:13px;">Tümü &rarr;</a>
         </div>
         <?php foreach (array_slice($alerts, 0, 5) as $a): ?>
             <div style="padding:10px 12px;margin-bottom:8px;border-radius:10px;background:#f8fafc;border-left:3px solid <?php
@@ -191,11 +191,11 @@ require __DIR__ . '/../inc/header.php';
 <div class="cf-card">
     <div class="cf-card-head">
         <h3 style="margin:0;">Son İşlemler</h3>
-        <a href="/transactions.php" style="font-size:13px;">Tümü →</a>
+        <a href="/transactions.php" style="font-size:13px;">Tümü &rarr;</a>
     </div>
     <?php if (empty($recent)): ?>
         <div class="cf-empty">
-            <div class="icon">📒</div>
+            <div class="icon">İ</div>
             Henüz bir işlem kaydı yok.<br>
             <a class="btn btn-primary btn-sm" href="/transactions.php?new=1" style="margin-top:10px;">İlk İşlemi Ekle</a>
         </div>
@@ -222,7 +222,7 @@ require __DIR__ . '/../inc/header.php';
                                         <?= e($r['category_name']) ?>
                                     </span>
                                 <?php else: ?>
-                                    <span class="cf-pill">—</span>
+                                    <span class="cf-pill">&mdash;</span>
                                 <?php endif; ?>
                             </td>
                             <td data-label="Tür">
@@ -231,7 +231,7 @@ require __DIR__ . '/../inc/header.php';
                                 </span>
                             </td>
                             <td data-label="Tutar" class="amount <?= $r['type']==='income'?'income':'expense' ?>">
-                                <?= ($r['type']==='income'?'+':'−') ?> <?= money($r['amount']) ?>
+                                <?= ($r['type']==='income'?'+':'&minus;') ?> <?= money($r['amount']) ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>

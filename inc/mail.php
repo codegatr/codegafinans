@@ -70,7 +70,7 @@ function cf_mail_config(): array
     ];
 }
 
-function cf_send_mail(string $to, string $subject, string $html, ?string $text = null): bool
+function cf_send_mail(string $to, string $subject, string $html, ?string $text = null, array $attachments = []): bool
 {
     $to = trim($to);
     if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
@@ -130,7 +130,8 @@ function cf_send_mail(string $to, string $subject, string $html, ?string $text =
         cf_mail_write($socket, 'DATA');
         cf_mail_expect($socket, [354]);
 
-        $boundary = 'cf_' . bin2hex(random_bytes(12));
+        $altBoundary = 'cf_alt_' . bin2hex(random_bytes(12));
+        $mixedBoundary = 'cf_mix_' . bin2hex(random_bytes(12));
         $text = $text ?: trim(strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $html)));
         $headers = [
             'Date: ' . date(DATE_RFC2822),
@@ -138,12 +139,32 @@ function cf_send_mail(string $to, string $subject, string $html, ?string $text =
             'To: <' . $to . '>',
             'Subject: ' . cf_mail_header_encode($subject),
             'MIME-Version: 1.0',
-            'Content-Type: multipart/alternative; boundary="' . $boundary . '"',
+            'Content-Type: ' . ($attachments ? 'multipart/mixed; boundary="' . $mixedBoundary . '"' : 'multipart/alternative; boundary="' . $altBoundary . '"'),
         ];
         $message = implode("\r\n", $headers) . "\r\n\r\n";
-        $message .= '--' . $boundary . "\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" . chunk_split(base64_encode($text));
-        $message .= "\r\n--" . $boundary . "\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" . chunk_split(base64_encode($html));
-        $message .= "\r\n--" . $boundary . "--\r\n";
+        if ($attachments) {
+            $message .= '--' . $mixedBoundary . "\r\n";
+            $message .= 'Content-Type: multipart/alternative; boundary="' . $altBoundary . '"' . "\r\n\r\n";
+        }
+        $message .= '--' . $altBoundary . "\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" . chunk_split(base64_encode($text));
+        $message .= "\r\n--" . $altBoundary . "\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" . chunk_split(base64_encode($html));
+        $message .= "\r\n--" . $altBoundary . "--\r\n";
+        foreach ($attachments as $attachment) {
+            $filename = (string)($attachment['filename'] ?? 'ek.pdf');
+            $content = (string)($attachment['content'] ?? '');
+            $contentType = (string)($attachment['content_type'] ?? 'application/octet-stream');
+            if ($content === '') {
+                continue;
+            }
+            $message .= "\r\n--" . $mixedBoundary . "\r\n";
+            $message .= 'Content-Type: ' . $contentType . '; name="' . addcslashes($filename, "\"\\") . '"' . "\r\n";
+            $message .= 'Content-Transfer-Encoding: base64' . "\r\n";
+            $message .= 'Content-Disposition: attachment; filename="' . addcslashes($filename, "\"\\") . '"' . "\r\n\r\n";
+            $message .= chunk_split(base64_encode($content));
+        }
+        if ($attachments) {
+            $message .= "\r\n--" . $mixedBoundary . "--\r\n";
+        }
         $message = preg_replace('/^\./m', '..', $message);
 
         fwrite($socket, $message . "\r\n.\r\n");

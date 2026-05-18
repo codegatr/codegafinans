@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.16 - 2026-05-18
+
+- Cari Hesap Ekstresi mail gönderimi gerçek PDF eki gönderecek şekilde düzeltildi.
+- Cari Raporu mail akışı korundu ve PDF eki gönderecek şekilde güçlendirildi.
+- SMTP mail altyapısına geriye uyumlu dosya eki desteği eklendi.
+- Dashboard görünür metinleri Türkçe/UTF-8 açısından yeniden kontrol edildi; emoji ve özel semboller daha güvenli HTML metinlerine çevrildi.
+
 ## 1.0.15 - 2026-05-18
 
 - Cari sayfası daha sade, mobil öncelikli bir iş akışına dönüştürüldü; seçili cari detayı, hızlı hareket kaydı ve ekstre aksiyonları küçük ekranda tek kolon halinde toparlandı.

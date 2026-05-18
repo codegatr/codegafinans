@@ -250,6 +250,162 @@ function cari_report_html(array $rows, ?string $from, ?string $to, array $user):
     return (string)ob_get_clean();
 }
 
+function cari_pdf_utf16_hex(string $text): string
+{
+    $text = str_replace(["\r", "\n", "\t"], ' ', $text);
+    if (function_exists('iconv')) {
+        $encoded = iconv('UTF-8', 'UTF-16BE//IGNORE', $text);
+    } elseif (function_exists('mb_convert_encoding')) {
+        $encoded = mb_convert_encoding($text, 'UTF-16BE', 'UTF-8');
+    } else {
+        $encoded = '';
+    }
+    if ($encoded === false || $encoded === '') {
+        $encoded = '';
+        foreach (preg_split('//u', $text, -1, PREG_SPLIT_NO_EMPTY) ?: [] as $char) {
+            $code = ord($char[0]);
+            $encoded .= chr(0) . chr($code < 128 ? $code : 63);
+        }
+    }
+    return '<FEFF' . strtoupper(bin2hex($encoded)) . '>';
+}
+
+function cari_pdf_wrap(string $text, int $limit = 82): array
+{
+    $words = preg_split('/\s+/u', trim($text)) ?: [];
+    $lines = [];
+    $line = '';
+    foreach ($words as $word) {
+        $candidate = $line === '' ? $word : $line . ' ' . $word;
+        if (function_exists('mb_strlen') ? mb_strlen($candidate, 'UTF-8') > $limit : strlen($candidate) > $limit) {
+            if ($line !== '') {
+                $lines[] = $line;
+            }
+            $line = $word;
+        } else {
+            $line = $candidate;
+        }
+    }
+    if ($line !== '') {
+        $lines[] = $line;
+    }
+    return $lines ?: [''];
+}
+
+function cari_pdf_document(string $title, array $lines): string
+{
+    $objects = [];
+    $pageRefs = [];
+    $chunks = array_chunk($lines, 36);
+    $pageCount = max(1, count($chunks));
+    $catalogObj = 1;
+    $pagesObj = 2;
+    $fontObj = 3;
+    $nextObj = 4;
+
+    foreach ($chunks as $pageIndex => $chunk) {
+        $content = "BT\n/F1 16 Tf\n48 800 Td\n" . cari_pdf_utf16_hex($title) . " Tj\n";
+        $content .= "/F1 9 Tf\n0 -18 Td\n" . cari_pdf_utf16_hex('Oluşturma: ' . date('d.m.Y H:i') . ' | Sayfa ' . ($pageIndex + 1) . '/' . $pageCount) . " Tj\n";
+        $content .= "/F1 10 Tf\n0 -22 Td\n";
+        foreach ($chunk as $lineIndex => $line) {
+            if ($lineIndex > 0) {
+                $content .= "0 -15 Td\n";
+            }
+            $content .= cari_pdf_utf16_hex((string)$line) . " Tj\n";
+        }
+        $content .= "ET\n";
+        $contentObj = $nextObj++;
+        $pageObj = $nextObj++;
+        $objects[$contentObj] = "<< /Length " . strlen($content) . " >>\nstream\n" . $content . "endstream";
+        $objects[$pageObj] = "<< /Type /Page /Parent {$pagesObj} 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 {$fontObj} 0 R >> >> /Contents {$contentObj} 0 R >>";
+        $pageRefs[] = "{$pageObj} 0 R";
+    }
+
+    $objects[$catalogObj] = "<< /Type /Catalog /Pages {$pagesObj} 0 R >>";
+    $objects[$pagesObj] = "<< /Type /Pages /Kids [" . implode(' ', $pageRefs) . "] /Count " . count($pageRefs) . " >>";
+    $objects[$fontObj] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>";
+    ksort($objects);
+
+    $pdf = "%PDF-1.4\n%\xE2\xE3\xCF\xD3\n";
+    $offsets = [0];
+    foreach ($objects as $num => $body) {
+        $offsets[$num] = strlen($pdf);
+        $pdf .= $num . " 0 obj\n" . $body . "\nendobj\n";
+    }
+    $xref = strlen($pdf);
+    $pdf .= "xref\n0 " . (count($objects) + 1) . "\n0000000000 65535 f \n";
+    for ($i = 1; $i <= count($objects); $i++) {
+        $pdf .= sprintf("%010d 00000 n \n", $offsets[$i] ?? 0);
+    }
+    $pdf .= "trailer\n<< /Size " . (count($objects) + 1) . " /Root {$catalogObj} 0 R >>\nstartxref\n{$xref}\n%%EOF";
+    return $pdf;
+}
+
+function cari_statement_pdf(array $customer, array $rows, ?string $from, ?string $to, array $user): string
+{
+    [$debit, $credit, $balance] = cari_statement_totals($rows);
+    $lines = [
+        CF_APP_NAME . ' - Cari Hesap Ekstresi',
+        'Dönem: ' . cari_doc_period($from, $to),
+        'Cari: ' . (string)$customer['name'],
+        'E-posta / Telefon: ' . (($customer['email'] ?: '-') . ' / ' . ($customer['phone'] ?: '-')),
+        'Hazırlayan: ' . (string)($user['name'] ?? CF_APP_NAME),
+        'Toplam Borç: ' . money($debit) . ' | Toplam Alacak/Ödeme: ' . money($credit) . ' | Net: ' . money(abs($balance)) . ' ' . ($balance >= 0 ? 'Alacak' : 'Borç'),
+        str_repeat('-', 92),
+        'Tarih | İşlem / Açıklama | Borç | Alacak | Ara Bakiye',
+    ];
+    $running = 0.0;
+    foreach ($rows as $row) {
+        $amount = (float)$row['amount'];
+        $running += $row['direction'] === 'debit' ? $amount : -$amount;
+        $line = tr_date($row['tx_date']) . ' | ' . $row['title'];
+        if (!empty($row['note'])) {
+            $line .= ' - ' . $row['note'];
+        }
+        $line .= ' | ' . ($row['direction'] === 'debit' ? money($amount) : '-');
+        $line .= ' | ' . ($row['direction'] === 'credit' ? money($amount) : '-');
+        $line .= ' | ' . money(abs($running)) . ' ' . ($running >= 0 ? 'Alacak' : 'Borç');
+        array_push($lines, ...cari_pdf_wrap($line));
+    }
+    if (!$rows) {
+        $lines[] = 'Bu dönem için hareket yok.';
+    }
+    $lines[] = str_repeat('-', 92);
+    $lines[] = 'Bu ekstre bilgilendirme ve mutabakat amacıyla oluşturulmuştur.';
+    return cari_pdf_document('Cari Hesap Ekstresi', $lines);
+}
+
+function cari_report_pdf(array $rows, ?string $from, ?string $to, array $user): string
+{
+    $debit = 0.0; $credit = 0.0;
+    foreach ($rows as $row) {
+        $debit += (float)$row['debit_total'];
+        $credit += (float)$row['credit_total'];
+    }
+    $net = $debit - $credit;
+    $lines = [
+        CF_APP_NAME . ' - Cari Raporu',
+        'Dönem: ' . cari_doc_period($from, $to),
+        'Hazırlayan: ' . (string)($user['name'] ?? CF_APP_NAME),
+        'Cari Sayısı: ' . count($rows),
+        'Toplam Borç: ' . money($debit) . ' | Toplam Alacak/Ödeme: ' . money($credit) . ' | Net Portföy: ' . money(abs($net)) . ' ' . ($net >= 0 ? 'Alacak' : 'Borç'),
+        str_repeat('-', 92),
+        'Cari | İletişim | Borç | Alacak | Net Bakiye | Son Hareket',
+    ];
+    foreach ($rows as $row) {
+        $balance = (float)$row['balance'];
+        $line = $row['name'] . ' | ' . ($row['phone'] ?: '-') . ' / ' . ($row['email'] ?: '-');
+        $line .= ' | ' . money($row['debit_total']) . ' | ' . money($row['credit_total']);
+        $line .= ' | ' . money(abs($balance)) . ' ' . ($balance >= 0 ? 'Alacak' : 'Borç');
+        $line .= ' | ' . ($row['last_tx_date'] ? tr_date($row['last_tx_date']) : '-');
+        array_push($lines, ...cari_pdf_wrap($line));
+    }
+    if (!$rows) {
+        $lines[] = 'Raporlanacak cari bulunamadı.';
+    }
+    return cari_pdf_document('Cari Raporu', $lines);
+}
+
 $reportFrom = isset($_GET['from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$_GET['from']) ? (string)$_GET['from'] : null;
 $reportTo = isset($_GET['to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$_GET['to']) ? (string)$_GET['to'] : null;
 $statementFrom = isset($_GET['statement_from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$_GET['statement_from']) ? (string)$_GET['statement_from'] : null;
@@ -424,10 +580,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $rows = cari_statement_rows($uid, $customerId, $from, $to);
             $html = cari_statement_html($customer, $rows, $from, $to, $user);
+            $pdf = cari_statement_pdf($customer, $rows, $from, $to, $user);
             $subject = 'Cari Hesap Ekstresi - ' . $customer['name'];
-            cf_send_mail($email, $subject, $html, 'Cari hesap ekstreniz ektedir. Detaylar HTML mesaj içeriğindedir.');
+            cf_send_mail(
+                $email,
+                $subject,
+                $html,
+                'Cari hesap ekstreniz PDF olarak ektedir. Detaylar HTML mesaj içeriğinde de yer alır.',
+                [[
+                    'filename' => 'cari-hesap-ekstresi-' . date('Ymd-His') . '.pdf',
+                    'content_type' => 'application/pdf',
+                    'content' => $pdf,
+                ]]
+            );
             audit('customer.statement.email', $uid, null, "customer={$customerId} email={$email}");
-            flash('success', 'Cari ekstresi ' . $email . ' adresine gönderildi.');
+            flash('success', 'Cari hesap ekstresi PDF olarak ' . $email . ' adresine gönderildi.');
         } catch (Throwable $e) {
             flash('danger', 'Mail gönderilemedi: ' . $e->getMessage());
         }
@@ -446,9 +613,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $rows = cari_report_rows($uid, $from, $to);
             $html = cari_report_html($rows, $from, $to, $user);
-            cf_send_mail($email, 'Cari Raporu - ' . cari_doc_period($from, $to), $html, 'Cari raporunuz HTML mesaj içeriğindedir.');
+            $pdf = cari_report_pdf($rows, $from, $to, $user);
+            cf_send_mail(
+                $email,
+                'Cari Raporu - ' . cari_doc_period($from, $to),
+                $html,
+                'Cari raporunuz PDF olarak ektedir. Detaylar HTML mesaj içeriğinde de yer alır.',
+                [[
+                    'filename' => 'cari-raporu-' . date('Ymd-His') . '.pdf',
+                    'content_type' => 'application/pdf',
+                    'content' => $pdf,
+                ]]
+            );
             audit('customer.report.email', $uid, null, 'email=' . $email);
-            flash('success', 'Cari raporu ' . $email . ' adresine gönderildi.');
+            flash('success', 'Cari raporu PDF olarak ' . $email . ' adresine gönderildi.');
         } catch (Throwable $e) {
             flash('danger', 'Cari raporu gönderilemedi: ' . $e->getMessage());
         }
@@ -587,7 +765,7 @@ require __DIR__ . '/../inc/header.php';
                 <input type="email" name="report_email" value="<?= e($user['email'] ?? '') ?>" placeholder="rapor@alan.com" required>
             </div>
             <div style="display:flex;align-items:end;">
-                <button class="btn btn-outline" style="width:100%;">Cari Raporunu Mail Gönder</button>
+                <button class="btn btn-outline" style="width:100%;">Cari Raporunu PDF Mail Gönder</button>
             </div>
         </div>
     </form>
@@ -790,9 +968,9 @@ require __DIR__ . '/../inc/header.php';
                             <input type="date" name="statement_to">
                         </div>
                     </div>
-                    <button class="btn btn-outline" <?= filter_var((string)($selected['email'] ?? ''), FILTER_VALIDATE_EMAIL) ? '' : 'disabled title="Bu caride e-posta adresi yok"' ?>>Mail ile Gönder</button>
+                    <button class="btn btn-outline" <?= filter_var((string)($selected['email'] ?? ''), FILTER_VALIDATE_EMAIL) ? '' : 'disabled title="Bu caride e-posta adresi yok"' ?>>PDF Olarak Mail Gönder</button>
                     <div class="muted" style="font-size:12px;">
-                        Alıcı: <?= e($selected['email'] ?: 'Bu caride e-posta adresi yok') ?>
+                        Alıcı: <?= e($selected['email'] ?: 'Bu caride e-posta adresi yok') ?>. Ekstre PDF ekiyle gönderilir.
                     </div>
                 </form>
             </div>
