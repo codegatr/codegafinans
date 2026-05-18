@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.13 - 2026-05-18
+
+- UTF-8/Türkçe karakter bozulmaları temizlendi; manifest ve sürüm bilgisi metinleri düzeltildi.
+- Ana sayfa metinleri gerçek Türkçe karakterlerle güncellendi.
+- Üye girişi ekranı ana sitenin teal/yeşil marka renkleriyle yeniden tasarlandı.
+- Kullanıcı dashboard'ı mobil görünüm için iyileştirildi: KPI kartları iki sütunlu mobil düzene geçti, tablolar mobil kartlara dönüştü, üst bar dar ekranda taşmayacak şekilde toparlandı.
+- 390px mobil simülasyonda login ve dashboard yatay taşma olmadan doğrulandı.
+
 ## 1.0.12 - 2026-05-18
 
 - Landing sayfasi defter.net benzeri teal hero, sade nav, uygulama onizleme kartlari, ozellikler ve fiyatlandirma akisi ile yenilendi.

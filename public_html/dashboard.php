@@ -31,7 +31,7 @@ $donutData = [
 $sparkValues = array_map(fn($r) => (float)$r['income'] - (float)$r['expense'], $series);
 
 $pageTitle  = 'Anasayfa';
-$pageHeader = 'Merhaba, ' . explode(' ', $user['name'])[0] . ' 👋';
+$pageHeader = 'Merhaba, ' . explode(' ', $user['name'])[0];
 
 require __DIR__ . '/../inc/header.php';
 ?>
@@ -49,8 +49,9 @@ require __DIR__ . '/../inc/header.php';
     </div>
 <?php endif; ?>
 
+<div class="cf-dashboard">
 <!-- KPI'lar -->
-<div class="cf-grid cf-grid-4" style="margin-bottom:18px;">
+<div class="cf-grid cf-grid-4 cf-dashboard-kpis">
     <div class="cf-stat income">
         <div class="label">Bu Ay Gelir</div>
         <div class="value"><?= money($summary['income']) ?></div>
@@ -83,8 +84,8 @@ require __DIR__ . '/../inc/header.php';
 
 <!-- Bütçe kullanım progress -->
 <?php if ($summary['budget'] > 0): ?>
-<div class="cf-card" style="margin-bottom:18px;">
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;">
+<div class="cf-card cf-budget-card">
+    <div class="cf-card-head">
         <h3 style="margin:0;">Aylık Bütçe Kullanımı</h3>
         <span class="cf-pill <?= $summary['usage'] >= 100 ? 'danger' : ($summary['usage'] >= 85 ? 'warn' : 'success') ?>">
             <?= money($summary['expense']) ?> / <?= money($summary['budget']) ?>
@@ -101,7 +102,7 @@ require __DIR__ . '/../inc/header.php';
 <?php endif; ?>
 
 <!-- Dağılım + Trend -->
-<div class="cf-grid cf-grid-2" style="margin-bottom:18px;">
+<div class="cf-grid cf-grid-2 cf-dashboard-grid">
     <div class="cf-card">
         <h3>Kategori Bazlı Harcama</h3>
         <?php if (empty($cats)): ?>
@@ -120,7 +121,7 @@ require __DIR__ . '/../inc/header.php';
         <?php if (count($sparkValues) >= 2): ?>
             <div data-spark='<?= e(json_encode(['series'=>$sparkValues,'color'=>'#2563eb'])) ?>' style="height:120px;"></div>
             <div class="cf-table-wrap" style="margin-top:14px;">
-                <table class="cf-table" style="box-shadow:none;border:0;">
+                <table class="cf-table cf-mobile-cards cf-dashboard-table" style="box-shadow:none;border:0;">
                     <thead>
                         <tr><th>Ay</th><th class="amount">Gelir</th><th class="amount">Gider</th><th class="amount">Net</th></tr>
                     </thead>
@@ -128,10 +129,10 @@ require __DIR__ . '/../inc/header.php';
                         <?php foreach ($series as $r):
                             $net = (float)$r['income'] - (float)$r['expense']; ?>
                             <tr>
-                                <td><?= tr_month($r['ym']) ?></td>
-                                <td class="amount income"><?= money($r['income']) ?></td>
-                                <td class="amount expense"><?= money($r['expense']) ?></td>
-                                <td class="amount" style="color:<?= $net >= 0 ? '#047857' : '#b91c1c' ?>"><?= money($net) ?></td>
+                                <td data-label="Ay"><?= tr_month($r['ym']) ?></td>
+                                <td data-label="Gelir" class="amount income"><?= money($r['income']) ?></td>
+                                <td data-label="Gider" class="amount expense"><?= money($r['expense']) ?></td>
+                                <td data-label="Net" class="amount" style="color:<?= $net >= 0 ? '#047857' : '#b91c1c' ?>"><?= money($net) ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -144,9 +145,9 @@ require __DIR__ . '/../inc/header.php';
 </div>
 
 <!-- Tasarruf hedefleri + Uyarılar + Son işlemler -->
-<div class="cf-grid cf-grid-2" style="margin-bottom:18px;">
+<div class="cf-grid cf-grid-2 cf-dashboard-grid">
     <div class="cf-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div class="cf-card-head">
             <h3 style="margin:0;">Aktif Tasarruf Hedefleri</h3>
             <a href="/goals.php" style="font-size:13px;">Tümü →</a>
         </div>
@@ -159,7 +160,7 @@ require __DIR__ . '/../inc/header.php';
         <?php else: foreach ($goals as $g):
             $pct = $g['target_amount'] > 0 ? min(100, round((float)$g['current_amount']/(float)$g['target_amount']*100)) : 0; ?>
             <div style="margin-bottom:14px;">
-                <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:500;">
+                <div class="cf-goal-row">
                     <span><?= e($g['title']) ?></span>
                     <span><?= money($g['current_amount']) ?> / <?= money($g['target_amount']) ?></span>
                 </div>
@@ -172,7 +173,7 @@ require __DIR__ . '/../inc/header.php';
     </div>
 
     <div class="cf-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div class="cf-card-head">
             <h3 style="margin:0;">Akıllı Uyarılar</h3>
             <a href="/alerts.php" style="font-size:13px;">Tümü →</a>
         </div>
@@ -188,7 +189,7 @@ require __DIR__ . '/../inc/header.php';
 </div>
 
 <div class="cf-card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <div class="cf-card-head">
         <h3 style="margin:0;">Son İşlemler</h3>
         <a href="/transactions.php" style="font-size:13px;">Tümü →</a>
     </div>
@@ -200,7 +201,7 @@ require __DIR__ . '/../inc/header.php';
         </div>
     <?php else: ?>
         <div class="cf-table-wrap">
-            <table class="cf-table" style="box-shadow:none;border:0;">
+            <table class="cf-table cf-mobile-cards cf-dashboard-table" style="box-shadow:none;border:0;">
                 <thead>
                     <tr>
                         <th>Tarih</th>
@@ -213,9 +214,9 @@ require __DIR__ . '/../inc/header.php';
                 <tbody>
                     <?php foreach ($recent as $r): ?>
                         <tr>
-                            <td><?= tr_date($r['tx_date']) ?></td>
-                            <td><strong><?= e($r['title']) ?></strong></td>
-                            <td>
+                            <td data-label="Tarih"><?= tr_date($r['tx_date']) ?></td>
+                            <td data-label="Açıklama"><strong><?= e($r['title']) ?></strong></td>
+                            <td data-label="Kategori">
                                 <?php if ($r['category_name']): ?>
                                     <span class="cf-pill" style="background: <?= e($r['category_color']) ?>22;color:<?= e($r['category_color']) ?>;">
                                         <?= e($r['category_name']) ?>
@@ -224,12 +225,12 @@ require __DIR__ . '/../inc/header.php';
                                     <span class="cf-pill">—</span>
                                 <?php endif; ?>
                             </td>
-                            <td>
+                            <td data-label="Tür">
                                 <span class="cf-pill <?= $r['type']==='income'?'income':'expense' ?>">
                                     <?= $r['type']==='income' ? 'Gelir' : 'Gider' ?>
                                 </span>
                             </td>
-                            <td class="amount <?= $r['type']==='income'?'income':'expense' ?>">
+                            <td data-label="Tutar" class="amount <?= $r['type']==='income'?'income':'expense' ?>">
                                 <?= ($r['type']==='income'?'+':'−') ?> <?= money($r['amount']) ?>
                             </td>
                         </tr>
@@ -238,6 +239,7 @@ require __DIR__ . '/../inc/header.php';
             </table>
         </div>
     <?php endif; ?>
+</div>
 </div>
 
 <?php require __DIR__ . '/../inc/footer.php'; ?>

@@ -40,6 +40,7 @@
 /* ------------ Reset & base ------------ */
 * { box-sizing: border-box; }
 html, body { height: 100%; }
+html { overflow-x: hidden; }
 body {
     margin: 0;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -48,6 +49,7 @@ body {
     -webkit-font-smoothing: antialiased;
     -webkit-text-size-adjust: 100%;
     padding-bottom: env(safe-area-inset-bottom);
+    overflow-x: hidden;
 }
 a { color: var(--cf-primary); text-decoration: none; }
 a:hover { color: var(--cf-primary-2); }
@@ -155,11 +157,171 @@ a:hover { color: var(--cf-primary-2); }
 .cf-auth .meta a { color: #93c5fd; }
 .cf-auth .field-error { color: #fda4af; font-size: 12px; margin-top: 4px; }
 
+.cf-auth-login {
+    align-items: stretch;
+    background:
+        radial-gradient(circle at 16% 14%, rgba(255,255,255,.18), transparent 26%),
+        linear-gradient(135deg, #08766f 0%, #0a9f8b 48%, #04715f 100%);
+    padding: 28px 18px;
+}
+.cf-auth-login::before,
+.cf-auth-login::after {
+    display: none;
+}
+.cf-auth-shell {
+    width: min(1080px, 100%);
+    margin: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(340px, .75fr);
+    gap: 34px;
+    align-items: stretch;
+}
+.cf-auth-panel {
+    min-height: 620px;
+    padding: 34px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: #fff;
+}
+.cf-auth-home-brand {
+    margin: 0;
+    color: #fff;
+    text-decoration: none;
+}
+.cf-auth-home-brand .logo {
+    background: linear-gradient(135deg, rgba(255,255,255,.2), rgba(37,99,235,.26));
+    border: 1px solid rgba(255,255,255,.28);
+    box-shadow: 0 12px 28px rgba(0,0,0,.16);
+}
+.cf-auth-home-brand .name small {
+    display: block;
+    color: rgba(255,255,255,.78);
+    font-size: 12px;
+    margin-top: 4px;
+}
+.cf-auth-copy {
+    max-width: 640px;
+}
+.cf-auth-kicker {
+    display: inline-flex;
+    padding: 7px 13px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.14);
+    border: 1px solid rgba(255,255,255,.18);
+    color: rgba(255,255,255,.9);
+    font-size: 12px;
+    font-weight: 800;
+}
+.cf-auth-copy h1 {
+    margin: 20px 0 18px;
+    color: #fff;
+    font-size: 52px;
+    line-height: 1.04;
+    letter-spacing: 0;
+}
+.cf-auth-copy p {
+    margin: 0;
+    max-width: 580px;
+    color: rgba(255,255,255,.88);
+    font-size: 19px;
+    line-height: 1.65;
+}
+.cf-auth-points {
+    display: grid;
+    gap: 12px;
+    max-width: 520px;
+}
+.cf-auth-points span {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255,255,255,.9);
+    font-weight: 700;
+}
+.cf-auth-points span::before {
+    content: '';
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #fbbf24;
+    box-shadow: 0 0 0 4px rgba(251,191,36,.16);
+}
+.cf-auth-login-card {
+    align-self: center;
+    max-width: 430px;
+    width: 100%;
+    background: rgba(255,255,255,.96);
+    color: var(--cf-text);
+    border: 1px solid rgba(255,255,255,.42);
+    box-shadow: 0 28px 70px rgba(0,0,0,.22);
+}
+.cf-auth-login-card h1 {
+    color: #063331;
+    font-size: 30px;
+}
+.cf-auth-login-card p {
+    color: #64748b;
+}
+.cf-auth-login-card label {
+    color: #334155;
+    font-weight: 700;
+}
+.cf-auth-login-card input[type=email],
+.cf-auth-login-card input[type=password] {
+    background: #f8fafc;
+    color: var(--cf-text);
+    border-color: #dbe4ee;
+}
+.cf-auth-login-card input:focus {
+    border-color: #0f9f8e;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(15,159,142,.14);
+}
+.cf-auth-login-card .btn-primary {
+    background: linear-gradient(135deg, #08766f, #10b981);
+    box-shadow: 0 12px 28px rgba(8,118,111,.28);
+}
+.cf-auth-login-card .meta,
+.cf-auth-login-card .meta a {
+    color: #475569;
+}
+
+@media (max-width: 860px) {
+    .cf-auth-login {
+        padding: 18px 14px;
+    }
+    .cf-auth-shell {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    .cf-auth-panel {
+        min-height: auto;
+        padding: 12px 4px 4px;
+        gap: 22px;
+    }
+    .cf-auth-copy h1 {
+        font-size: 34px;
+    }
+    .cf-auth-copy p {
+        font-size: 16px;
+    }
+    .cf-auth-points {
+        display: none;
+    }
+    .cf-auth-login-card {
+        max-width: none;
+        padding: 24px 20px;
+        border-radius: 18px;
+    }
+}
+
 /* ------------ App shell (yan menü + üst bar) ------------ */
 .cf-app {
     display: grid;
     grid-template-columns: 260px 1fr;
     min-height: 100vh;
+    min-width: 0;
 }
 .cf-sidebar {
     background: var(--cf-grad-night);
@@ -230,6 +392,7 @@ a:hover { color: var(--cf-primary-2); }
 .cf-main {
     background: #f7f8fb;
     min-height: 100vh;
+    min-width: 0;
 }
 .cf-backdrop {
     display: none;
@@ -295,6 +458,37 @@ a:hover { color: var(--cf-primary-2); }
     .cf-content { padding: 14px; }
 }
 
+@media (max-width: 560px) {
+    .cf-topbar {
+        gap: 8px;
+    }
+    .cf-topbar .left {
+        min-width: 0;
+    }
+    .cf-topbar h1 {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .cf-topbar .right > a {
+        width: 36px;
+        min-width: 36px;
+        height: 36px;
+        justify-content: center;
+        border-radius: 999px;
+        background: #f1f5f9;
+        font-size: 0 !important;
+    }
+    .cf-topbar .right > a svg {
+        width: 19px;
+        height: 19px;
+    }
+    .cf-userchip {
+        max-width: 132px;
+    }
+}
+
 /* ------------ Cards & widgets ------------ */
 .cf-grid { display: grid; gap: 16px; }
 .cf-grid-3 { grid-template-columns: repeat(3, 1fr); }
@@ -332,6 +526,96 @@ a:hover { color: var(--cf-primary-2); }
     color: var(--cf-text);
 }
 .cf-card .muted { color: var(--cf-text-soft); font-size: 13px; }
+
+.cf-dashboard {
+    display: grid;
+    gap: 18px;
+}
+.cf-dashboard-kpis,
+.cf-dashboard-grid,
+.cf-budget-card {
+    margin-bottom: 0 !important;
+}
+.cf-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.cf-card-head a {
+    flex: 0 0 auto;
+    font-weight: 700;
+}
+.cf-goal-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 600;
+}
+.cf-goal-row span:last-child {
+    white-space: nowrap;
+    color: var(--cf-text-soft);
+}
+
+@media (max-width: 560px) {
+    .cf-dashboard {
+        gap: 12px;
+    }
+    .cf-dashboard-kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+    .cf-dashboard-kpis .cf-stat {
+        min-height: 118px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .cf-dashboard-kpis .cf-stat .label {
+        font-size: 10px;
+        line-height: 1.25;
+    }
+    .cf-dashboard-kpis .cf-stat .value {
+        font-size: clamp(17px, 5vw, 21px);
+        line-height: 1.15;
+        overflow-wrap: anywhere;
+    }
+    .cf-dashboard-kpis .cf-stat .sub {
+        font-size: 11px;
+        line-height: 1.35;
+    }
+    .cf-card-head {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .cf-card-head .cf-pill,
+    .cf-card-head a {
+        align-self: flex-start;
+    }
+    .cf-goal-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .cf-dashboard-table.cf-mobile-cards td:first-child {
+        border-bottom: 0;
+        font-size: 14px;
+        margin-bottom: 0;
+        padding: 6px 0;
+    }
+    .cf-dashboard-table.cf-mobile-cards td:first-child::before {
+        content: attr(data-label);
+        display: inline;
+        color: var(--cf-text-soft);
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+    }
+}
 
 .cf-stat {
     position: relative;
