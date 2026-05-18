@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.14 - 2026-05-18
+
+- Ana sayfa defter.net benzerliğinden ayrıştırıldı; CODEGA'ya özgü finans operasyon paneli kompozisyonu eklendi.
+- Telefon/mockup odaklı eski landing yapısı ve kaynakta kalan eski landing CSS bloğu temizlendi.
+- Ana sayfa; modüller, güvenlik/kontrol ve fiyatlandırma akışıyla yeniden kurgulandı.
+- Mobil landing görünümü 390px genişlikte yatay taşma olmadan doğrulandı.
+
 ## 1.0.13 - 2026-05-18
 
 - UTF-8/Türkçe karakter bozulmaları temizlendi; manifest ve sürüm bilgisi metinleri düzeltildi.
