@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-define('CF_VERSION',       '1.0.3');
+define('CF_VERSION',       '1.0.4');
 define('CF_RELEASED_AT',   '2026-05-18');
 define('CF_REPO',          'codegatr/codegafinans');
 define('CF_BRANCH',        'main');

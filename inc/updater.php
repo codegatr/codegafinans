@@ -145,9 +145,7 @@ function upd_apply(?int $adminId = null): array
         $zip->extractTo($extractDir);
         $zip->close();
 
-        // GitHub zipball içinde tek üst klasör vardır
-        $sub = upd_first_subdir($extractDir);
-        $sourceDir = $sub ?: $extractDir;
+        $sourceDir = upd_package_root($extractDir);
 
         // 4) Dosyaları kopyala (tracked_paths)
         $manifestNew = $sourceDir . '/manifest.json';
@@ -345,6 +343,25 @@ function upd_first_subdir(string $dir): ?string
         }
     }
     return null;
+}
+
+function upd_package_root(string $extractDir): string
+{
+    if (is_file($extractDir . '/manifest.json')) {
+        return $extractDir;
+    }
+
+    $items = @scandir($extractDir) ?: [];
+    foreach ($items as $it) {
+        if ($it === '.' || $it === '..') { continue; }
+        $candidate = $extractDir . '/' . $it;
+        if (is_dir($candidate) && is_file($candidate . '/manifest.json')) {
+            return $candidate;
+        }
+    }
+
+    $sub = upd_first_subdir($extractDir);
+    return $sub ?: $extractDir;
 }
 
 function upd_rrmdir(string $dir): void

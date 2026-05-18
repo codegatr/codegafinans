@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.4 - 2026-05-18
+
+- Smart Update paket kokunu daha saglam bulacak sekilde guncellendi.
+- Release asset ZIP'leri icin kokte veya tek ust klasor icinde bulunan `manifest.json` desteklendi.
+- Eski updater uyumlulugu icin release ZIP paketleme yapisi duzeltildi.
+
 ## 1.0.3 - 2026-05-18
 
 - Uyelere ozel cari hesap modulu eklendi.
