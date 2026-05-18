@@ -1,4 +1,32 @@
+# CODEGA Finans .gitignore
+
+# Sunucuya özel ayarlar
+inc/config.local.php
 .env
-storage/*.sqlite
-storage/*.sqlite-journal
+
+# Çalışma anı klasörleri (deploy sonrası DOLMAYACAK / korunacak)
+storage/*
+!storage/.gitkeep
+backups/*
+!backups/.gitkeep
+updates/*
+!updates/.gitkeep
+
+# OS & editör
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# PHP & composer
+vendor/
+composer.lock
 *.log
+*.tmp
+*.cache
+
+# Apache override (sunucuya özel olabilir)
+public_html/.htaccess.local

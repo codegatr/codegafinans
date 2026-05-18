@@ -1,0 +1,45 @@
+{
+    "name": "CODEGA Finans",
+    "slug": "codegafinans",
+    "domain": "finans.codega.com.tr",
+    "version": "1.0.1",
+    "released_at": "2026-05-18",
+    "repo": "codegatr/codegafinans",
+    "branch": "main",
+    "author": "CODEGA - Yunus Aksoy",
+    "license": "Proprietary",
+    "modules": [
+        "Kullanıcı Kayıt / Giriş",
+        "Aylık Bütçe Yönetimi",
+        "Gelir-Gider Takibi",
+        "Tasarruf Hedefleri",
+        "Borç Kontrolü",
+        "Güncel Döviz Kurları (TCMB)",
+        "Akıllı Uyarılar & Analizler",
+        "Abonelik Sistemi (Play Store entegrasyonlu)",
+        "Yönetici Paneli",
+        "Smart Update v5 (GitHub Release)",
+        "REST API (Android WebView)",
+        "PWA Desteği"
+    ],
+    "total_modules": 12,
+    "min_php": "8.3.0",
+    "min_mysql": "10.4",
+    "tracked_paths": [
+        "public_html/",
+        "inc/",
+        "migrations/",
+        ".htaccess",
+        "manifest.json",
+        "README.md",
+        "CHANGELOG.md",
+        "PUBLIC_HTML-KURULUM.md"
+    ],
+    "excluded_paths": [
+        "storage/",
+        "backups/",
+        "updates/",
+        ".env",
+        "inc/config.local.php"
+    ]
+}

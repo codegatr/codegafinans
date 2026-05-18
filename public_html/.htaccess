@@ -1,11 +1,49 @@
-RewriteEngine On
+# CODEGA Finans - public_html/.htaccess
+# DirectAdmin + LiteSpeed uyumlu
 
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^ index.php [QSA,L]
+ServerSignature Off
 
+# UTF-8
+AddDefaultCharset UTF-8
+
+# Güvenlik başlıkları
 <IfModule mod_headers.c>
-    Header always set X-Frame-Options "SAMEORIGIN"
-    Header always set X-Content-Type-Options "nosniff"
-    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    Header set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
 </IfModule>
+
+# HTTPS yönlendir
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP_HOST} ^(.+)$
+    RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
+</IfModule>
+
+# Hassas dosyalara erişim yasak
+<FilesMatch "^(\.env|composer\.(json|lock)|package\.json|.*\.sql|.*\.md|\.gitignore)$">
+    Require all denied
+</FilesMatch>
+
+# inc/, storage/, backups/, updates/, .git/ dışarıdan erişilmez
+RedirectMatch 404 /\.git
+RedirectMatch 404 ^/inc/
+RedirectMatch 404 ^/storage/
+RedirectMatch 404 ^/backups/
+RedirectMatch 404 ^/updates/
+RedirectMatch 404 ^/migrations/
+
+# Statik dosya cache
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/svg+xml "access plus 7 days"
+    ExpiresByType image/png "access plus 7 days"
+    ExpiresByType image/jpeg "access plus 7 days"
+    ExpiresByType text/css "access plus 1 days"
+    ExpiresByType application/javascript "access plus 1 days"
+</IfModule>
+
+DirectoryIndex index.php

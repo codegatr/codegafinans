@@ -1,0 +1,12 @@
+# CODEGA Finans - admin/.htaccess
+
+Options -Indexes
+ServerSignature Off
+
+<IfModule mod_headers.c>
+    Header set X-Robots-Tag "noindex, nofollow, noarchive"
+    Header set X-Frame-Options "DENY"
+    Header set Cache-Control "no-store, no-cache, must-revalidate"
+</IfModule>
+
+DirectoryIndex index.php

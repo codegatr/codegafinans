@@ -1,0 +1,158 @@
+/* =================================================================
+   CODEGA Finans - admin.css
+   Yönetici paneli stilleri (app.css üzerine binerek çalışır).
+   ================================================================= */
+
+.cf-admin .cf-sidebar {
+    background: linear-gradient(180deg, #111827 0%, #0b1220 100%);
+}
+.cf-admin {
+    background: #f5f7fb;
+}
+.cf-admin .cf-app {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    min-height: 100vh;
+    background: #f5f7fb;
+}
+.cf-admin .cf-sidebar {
+    width: 264px;
+    min-width: 264px;
+    padding: 20px 14px;
+}
+.cf-admin .cf-main {
+    min-width: 0;
+    width: 100%;
+    background: #f5f7fb;
+}
+.cf-admin .cf-topbar {
+    min-height: 70px;
+    background: rgba(255,255,255,.96);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+.cf-admin .cf-topbar h1 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    line-height: 1.2;
+}
+.cf-admin .cf-content {
+    width: 100%;
+    max-width: 1240px;
+    padding: 24px;
+}
+.cf-admin .cf-grid,
+.cf-admin .cf-kpi-grid {
+    min-width: 0;
+}
+.cf-admin .cf-card,
+.cf-admin .cf-stat {
+    min-width: 0;
+}
+.cf-admin .cf-table-wrap {
+    width: 100%;
+}
+.cf-admin .cf-table {
+    min-width: 640px;
+}
+.cf-admin .cf-flash {
+    margin-bottom: 14px;
+}
+.cf-admin .cf-brand .logo { background: linear-gradient(135deg, #b45309, #f59e0b 50%, #fde68a); color: #422006; }
+.cf-admin .cf-brand .name small { color: #fbbf24; }
+
+.cf-admin-flag {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(245, 158, 11, .15);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, .35);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    margin-left: 8px;
+}
+
+.cf-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+@media (max-width: 900px) { .cf-kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 540px) { .cf-kpi-grid { grid-template-columns: 1fr; } }
+
+.cf-mrr {
+    background: linear-gradient(135deg, #064e3b, #047857 50%, #10b981);
+    color: #fff;
+    border: 0;
+}
+.cf-mrr .label,
+.cf-mrr .sub {
+    color: rgba(255,255,255,.86);
+}
+
+.cf-users-search {
+    display: flex; gap: 8px; margin-bottom: 14px;
+}
+.cf-users-search input {
+    flex: 1;
+    border: 1px solid var(--cf-border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 14px;
+}
+
+.cf-update-card {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #fff;
+    border-radius: var(--cf-radius);
+    padding: 22px;
+    margin-bottom: 18px;
+}
+.cf-update-card h3 { color: #fff; }
+.cf-update-card .ver {
+    display: inline-block;
+    padding: 4px 10px;
+    background: rgba(255,255,255,.1);
+    border-radius: 8px;
+    font-family: 'Menlo','Monaco','Consolas',monospace;
+    font-size: 13px;
+}
+.cf-update-card .ver.new { background: rgba(16,185,129,.25); color: #6ee7b7; }
+
+.cf-update-log {
+    background: #0b1220;
+    color: #cbd5e1;
+    padding: 14px;
+    border-radius: 10px;
+    font-family: 'Menlo','Monaco','Consolas',monospace;
+    font-size: 12px;
+    max-height: 280px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+@media (max-width: 992px) {
+    .cf-admin .cf-app {
+        grid-template-columns: 1fr;
+    }
+    .cf-admin .cf-sidebar {
+        width: 280px;
+        min-width: 0;
+    }
+    .cf-admin .cf-topbar {
+        min-height: 62px;
+        padding: 12px 16px;
+    }
+    .cf-admin .cf-topbar .right {
+        gap: 8px;
+    }
+    .cf-admin .cf-topbar .right > a {
+        display: none;
+    }
+    .cf-admin .cf-content {
+        max-width: none;
+        padding: 16px;
+    }
+}
