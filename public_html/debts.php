@@ -141,11 +141,11 @@ foreach ($debts as $d) {
         <div class="row">
             <div>
                 <label>Toplam Tutar</label>
-                <input type="text" name="total_amount" data-money required placeholder="0,00">
+                <input type="text" name="total_amount" data-money inputmode="decimal" required placeholder="0,00">
             </div>
             <div>
-                <label>Ödenmiş Tutar</label>
-                <input type="text" name="paid_amount" data-money placeholder="0,00">
+                <label>Odenmis Tutar</label>
+                <input type="text" name="paid_amount" data-money inputmode="decimal" placeholder="0,00">
             </div>
         </div>
         <div class="row">
@@ -216,15 +216,15 @@ foreach ($debts as $d) {
 
         <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
             <?php if (!$d['is_closed']): ?>
-            <form method="post" style="display:flex;gap:8px;flex:1;" data-once>
+            <form method="post" class="inline-pay" style="display:flex;gap:8px;flex:1;align-items:stretch;" data-once>
                 <?= csrf_field() ?>
                 <input type="hidden" name="action" value="pay">
                 <input type="hidden" name="id" value="<?= (int)$d['id'] ?>">
-                <input type="text" name="amount" data-money placeholder="Ödeme tutarı" style="flex:1;padding:9px 12px;border:1px solid var(--cf-border);border-radius:8px;font-size:14px;">
-                <button class="btn btn-success btn-sm">Ödeme Kaydet</button>
+                <input type="text" name="amount" data-money inputmode="decimal" placeholder="Odeme tutari" style="flex:1;min-width:0;padding:11px 12px;border:1px solid var(--cf-border);border-radius:8px;font-size:14px;">
+                <button class="btn btn-success btn-sm">Odeme Kaydet</button>
             </form>
             <?php endif; ?>
-            <form method="post" onsubmit="return confirm('Bu borç ve tüm ödeme kayıtları silinsin mi?');">
+            <form method="post" onsubmit="return confirm('Bu borc ve tum odeme kayitlari silinsin mi?');">
                 <?= csrf_field() ?>
                 <input type="hidden" name="action" value="delete">
                 <input type="hidden" name="id" value="<?= (int)$d['id'] ?>">

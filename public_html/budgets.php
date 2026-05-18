@@ -24,11 +24,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirect('/budgets.php?m=' . $month);
         }
 
-        $exists = db_one(
-            'SELECT id FROM ' . t('budgets') . '
-              WHERE user_id = :u AND month = :m AND ((category_id IS NULL AND :c IS NULL) OR category_id = :c)',
-            [':u' => $user['id'], ':m' => $month, ':c' => $catId]
-        );
+        // Native prepared statements aynı named placeholder'i iki kere kabul etmiyor.
+        // Bu yüzden NULL ve esleme dallarini ayri placeholder'lara bagliyoruz.
+        if ($catId === null) {
+            $exists = db_one(
+                'SELECT id FROM ' . t('budgets') . '
+                  WHERE user_id = :u AND month = :m AND category_id IS NULL',
+                [':u' => $user['id'], ':m' => $month]
+            );
+        } else {
+            $exists = db_one(
+                'SELECT id FROM ' . t('budgets') . '
+                  WHERE user_id = :u AND month = :m AND category_id = :c',
+                [':u' => $user['id'], ':m' => $month, ':c' => $catId]
+            );
+        }
         if ($exists) {
             db_exec(
                 'UPDATE ' . t('budgets') . ' SET limit_amount = :l WHERE id = :id',
@@ -41,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 [':u' => $user['id'], ':c' => $catId, ':m' => $month, ':l' => $limit]
             );
         }
-        audit('budget.save', (int)$user['id'], null, "month={$month} cat={$catId} limit={$limit}");
+        audit('budget.save', (int)$user['id'], null, "month={$month} cat=" . ($catId ?? 'null') . " limit={$limit}");
         flash('success', 'Bütçe kaydedildi.');
         redirect('/budgets.php?m=' . $month);
     }
@@ -60,12 +70,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $month = preg_match('/^\d{4}-\d{2}$/', $_GET['m'] ?? '') ? $_GET['m'] : date('Y-m');
 
-// Bu ayın bütçeleri + kategori bazlı gerçekleşen gider
+// Bu ayin butceleri + kategori bazli gerceklesen gider.
+// Native prepared statement uyumu icin :u yerine alt sorguda :u2 kullaniyoruz.
 $budgets = db_all(
     'SELECT b.*, c.name AS category_name, c.color AS category_color,
             (SELECT COALESCE(SUM(t.amount),0)
                FROM ' . t('transactions') . ' t
-              WHERE t.user_id = :u AND t.type="expense"
+              WHERE t.user_id = :u2 AND t.type="expense"
                 AND DATE_FORMAT(t.tx_date,"%Y-%m") = b.month
                 AND ((b.category_id IS NULL) OR t.category_id = b.category_id)
             ) AS spent
@@ -73,7 +84,7 @@ $budgets = db_all(
        LEFT JOIN ' . t('categories') . ' c ON c.id = b.category_id
       WHERE b.user_id = :u AND b.month = :m
       ORDER BY b.category_id IS NULL DESC, c.sort',
-    [':u' => $user['id'], ':m' => $month]
+    [':u' => $user['id'], ':u2' => $user['id'], ':m' => $month]
 );
 
 $pageTitle  = 'Aylık Bütçe';
@@ -110,7 +121,7 @@ require __DIR__ . '/../inc/header.php';
                 </div>
                 <div>
                     <label>Limit (<?= e($user['currency']) ?>)</label>
-                    <input type="text" name="limit_amount" data-money required placeholder="0,00">
+                    <input type="text" name="limit_amount" data-money inputmode="decimal" required placeholder="0,00">
                 </div>
             </div>
             <button class="btn btn-primary" style="justify-self:start;">Kaydet</button>

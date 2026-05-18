@@ -6,10 +6,17 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../inc/auth.php';
+require_once __DIR__ . '/../inc/subscription.php';
 
 if (auth_user()) {
     redirect('/dashboard.php');
 }
+
+// Acik fiyatlandirma icin planlari DB'den oku (defter.net mantigi)
+$plansPublic = plans_active();
+// IBAN bilgisi olabilir, varsa gosterelim
+$ibanRow   = db_one("SELECT value FROM " . t('settings') . " WHERE key_name='iban'");
+$ibanNmRow = db_one("SELECT value FROM " . t('settings') . " WHERE key_name='iban_name'");
 
 $pageTitle = 'CODEGA Finans · Bütçe ve Tasarruf';
 ?>
@@ -32,9 +39,10 @@ $pageTitle = 'CODEGA Finans · Bütçe ve Tasarruf';
             <span style="width:36px;height:36px;border-radius:10px;background:var(--cf-grad-blue);display:grid;place-items:center;color:#fff;font-weight:800;">CF</span>
             <strong>CODEGA Finans</strong>
         </div>
-        <div style="display:flex;gap:10px;">
-            <a href="/login.php" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.2);">Giriş Yap</a>
-            <a href="/register.php" class="btn btn-primary">Ücretsiz Dene</a>
+        <div style="display:flex;gap:10px;align-items:center;">
+            <a href="#fiyatlandirma" class="cf-landing-link">Fiyatlandirma</a>
+            <a href="/login.php" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.2);">Giris Yap</a>
+            <a href="/register.php" class="btn btn-primary">Ucretsiz Dene</a>
         </div>
     </nav>
 
@@ -102,31 +110,94 @@ $pageTitle = 'CODEGA Finans · Bütçe ve Tasarruf';
         </div>
     </section>
 
+    <!-- ========== SEFFAF FIYATLANDIRMA (defter.net mantigi) ========== -->
+    <section id="fiyatlandirma" class="cf-pricing">
+        <div class="cf-pricing-head">
+            <span class="cf-coming" style="background:rgba(96,165,250,.18);color:#bfdbfe;border-color:rgba(96,165,250,.35);">FIYATLANDIRMA</span>
+            <h2>Seffaf fiyatlandirma, gizli ucret yok</h2>
+            <p>Tum islemler ayni paket icinde. Once <strong style="color:#fff;"><?= e(CF_TRIAL_DAYS) ?> gun ucretsiz</strong> deneyin, sonra istediginiz plana gecin.</p>
+        </div>
+
+        <div class="cf-pricing-grid">
+<?php foreach ($plansPublic as $p):
+    $isYearly = $p['period'] === 'yearly';
+    $period   = $p['period'] === 'yearly' ? 'yil' : ($p['period'] === 'monthly' ? 'ay' : '');
+    // Aylik karsiliklarini hesapla (yillik plan icin avantaj gostergesi)
+    $monthly  = $isYearly ? round((float)$p['price'] / 12, 0) : null;
+?>
+            <div class="cf-price-card<?= $isYearly ? ' featured' : '' ?>">
+                <?php if ($isYearly): ?><span class="cf-price-ribbon">En cok tercih edilen</span><?php endif; ?>
+                <div class="cf-price-name"><?= e($p['name']) ?></div>
+                <div class="cf-price-amount">
+                    <span class="num"><?= number_format((float)$p['price'], 0, ',', '.') ?></span>
+                    <span class="cur"><?= e($p['currency'] ?: 'TRY') ?></span>
+                    <?php if ($period): ?><small>/ <?= e($period) ?></small><?php endif; ?>
+                </div>
+                <?php if ($monthly !== null): ?>
+                    <div class="cf-price-sub">Yaklasik <strong><?= number_format((float)$monthly, 0, ',', '.') ?> <?= e($p['currency'] ?: 'TRY') ?></strong> / ay &middot; tek seferde odeme</div>
+                <?php else: ?>
+                    <div class="cf-price-sub">Her ay otomatik yenilenir, istediginiz zaman iptal edebilirsiniz.</div>
+                <?php endif; ?>
+
+                <ul class="cf-price-features">
+                    <li>Sinirsiz gelir / gider kaydi</li>
+                    <li>Aylik butce ve kategori limiti</li>
+                    <li>Tasarruf hedefi &amp; borc kontrolu</li>
+                    <li>Cari hesap takibi, borc / alacak girisi</li>
+                    <li>Cari ekstre (PDF / mail) &amp; cari rapor</li>
+                    <li>Guncel TCMB doviz kurlari</li>
+                    <li>Akilli uyarilar &amp; aylik analizler</li>
+                    <?php if ($isYearly): ?>
+                        <li><strong>Yillik plana ~%20 indirim</strong></li>
+                    <?php endif; ?>
+                </ul>
+
+                <a class="btn btn-primary btn-block" href="/register.php"><?= e(CF_TRIAL_DAYS) ?> gun ucretsiz dene</a>
+                <small class="cf-price-foot">Kredi karti gerektirmez &middot; istediginizde iptal</small>
+            </div>
+<?php endforeach; ?>
+        </div>
+
+        <?php if (!empty($ibanRow['value'])): ?>
+        <div class="cf-pricing-iban">
+            <h4>Havale / EFT ile odeme</h4>
+            <p>Banka havalesi ile odeme yapabilirsiniz. Dekontunuzu mail ile gonderdiginizde aboneliginiz 24 saat icinde aktive edilir.</p>
+            <div class="cf-iban-box">
+                <small>Hesap Sahibi</small>
+                <strong><?= e($ibanNmRow['value'] ?? 'CODEGA') ?></strong>
+                <small style="margin-top:10px;">IBAN</small>
+                <code><?= e($ibanRow['value']) ?></code>
+            </div>
+        </div>
+        <?php endif; ?>
+    </section>
+    <!-- ========== /FIYATLANDIRMA ========== -->
+
     <section style="background:rgba(255,255,255,.02);border-top:1px solid rgba(255,255,255,.05);padding:40px 28px;">
         <div style="max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;">
             <div>
-                <h3 style="color:#fff;font-size:16px;margin:0 0 8px;">📊 Detaylı analiz</h3>
+                <h3 style="color:#fff;font-size:16px;margin:0 0 8px;">Detayli analiz</h3>
                 <p style="color:#94a3b8;font-size:14px;margin:0;line-height:1.6;">
-                    Kategoriye göre harcama dağılımı, aylık trend, gelir-gider farkı.
+                    Kategoriye gore harcama dagilimi, aylik trend, gelir-gider farki.
                 </p>
             </div>
             <div>
-                <h3 style="color:#fff;font-size:16px;margin:0 0 8px;">🔔 Akıllı uyarılar</h3>
+                <h3 style="color:#fff;font-size:16px;margin:0 0 8px;">Akilli uyarilar</h3>
                 <p style="color:#94a3b8;font-size:14px;margin:0;line-height:1.6;">
-                    Bütçe sınırı, vadesi yaklaşan borç, tamamlanan hedef bildirimleri.
+                    Butce siniri, vadesi yaklasan borc, tamamlanan hedef bildirimleri.
                 </p>
             </div>
             <div>
-                <h3 style="color:#fff;font-size:16px;margin:0 0 8px;">🔒 Güvenli &amp; özel</h3>
+                <h3 style="color:#fff;font-size:16px;margin:0 0 8px;">Guvenli &amp; ozel</h3>
                 <p style="color:#94a3b8;font-size:14px;margin:0;line-height:1.6;">
-                    Veriler şifreli, hesabınız sadece sizin. Üçüncü taraflarla paylaşılmaz.
+                    Veriler sifreli, hesabiniz sadece sizin. Ucuncu taraflarla paylasilmaz.
                 </p>
             </div>
         </div>
         <div style="text-align:center;margin-top:40px;font-size:12px;color:#64748b;">
-            © <?= date('Y') ?> CODEGA · <a href="/privacy.php" style="color:#94a3b8;">Gizlilik</a>
-            · <a href="/terms.php" style="color:#94a3b8;">Kullanım Şartları</a>
-            · v<?= e(CF_VERSION) ?>
+            &copy; <?= date('Y') ?> CODEGA &middot; <a href="/privacy.php" style="color:#94a3b8;">Gizlilik</a>
+            &middot; <a href="/terms.php" style="color:#94a3b8;">Kullanim Sartlari</a>
+            &middot; v<?= e(CF_VERSION) ?>
         </div>
     </section>
 </div>

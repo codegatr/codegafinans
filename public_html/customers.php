@@ -606,19 +606,19 @@ require __DIR__ . '/../inc/header.php';
         </div>
     </div>
     <div class="cf-table-wrap">
-        <table class="cf-table" style="box-shadow:none;border-radius:10px;">
+        <table class="cf-table cf-mobile-cards" style="box-shadow:none;border-radius:10px;">
             <thead><tr><th>Cari</th><th>Tur</th><th class="amount">Borc</th><th class="amount">Alacak</th><th class="amount">Bakiye</th><th>Son Hareket</th></tr></thead>
             <tbody>
             <?php foreach ($reportRows as $r):
                 $bal = (float)$r['balance'];
             ?>
                 <tr>
-                    <td><strong><?= e($r['name']) ?></strong><div style="font-size:12px;color:var(--cf-muted);"><?= e($r['phone'] ?: '') ?> <?= e($r['email'] ?: '') ?></div></td>
-                    <td><?= e($r['type']) ?></td>
-                    <td class="amount income"><?= money($r['debit_total']) ?></td>
-                    <td class="amount expense"><?= money($r['credit_total']) ?></td>
-                    <td class="amount <?= $bal >= 0 ? 'income' : 'expense' ?>"><?= money(abs($bal)) ?> <?= $bal >= 0 ? 'Alacak' : 'Borc' ?></td>
-                    <td><?= $r['last_tx_date'] ? tr_date($r['last_tx_date']) : '-' ?></td>
+                    <td data-label="Cari"><strong><?= e($r['name']) ?></strong><div style="font-size:12px;color:var(--cf-muted);"><?= e($r['phone'] ?: '') ?> <?= e($r['email'] ?: '') ?></div></td>
+                    <td data-label="Tur"><?= e($r['type']) ?></td>
+                    <td data-label="Borc" class="amount income"><?= money($r['debit_total']) ?></td>
+                    <td data-label="Alacak" class="amount expense"><?= money($r['credit_total']) ?></td>
+                    <td data-label="Bakiye" class="amount <?= $bal >= 0 ? 'income' : 'expense' ?>"><?= money(abs($bal)) ?> <?= $bal >= 0 ? 'Alacak' : 'Borc' ?></td>
+                    <td data-label="Son Hareket"><?= $r['last_tx_date'] ? tr_date($r['last_tx_date']) : '-' ?></td>
                 </tr>
             <?php endforeach; ?>
             <?php if (!$reportRows): ?><tr><td colspan="6" class="muted">Raporlanacak cari bulunamadi.</td></tr><?php endif; ?>
@@ -706,8 +706,8 @@ require __DIR__ . '/../inc/header.php';
                 <div>
                     <h3 style="margin-bottom:4px;"><?= e($selected['name']) ?></h3>
                     <div style="font-size:13px;color:var(--cf-text-soft);">
-                        <?= e($selected['phone'] ?: '-') ?> · <?= e($selected['email'] ?: '-') ?>
-                        <?php if ($selected['tax_no']): ?> · Vergi/TCKN: <?= e($selected['tax_no']) ?><?php endif; ?>
+                        <?= e($selected['phone'] ?: '-') ?> &middot; <?= e($selected['email'] ?: '-') ?>
+                        <?php if ($selected['tax_no']): ?> &middot; Vergi/TCKN: <?= e($selected['tax_no']) ?><?php endif; ?>
                     </div>
                     <?php if ($selected['address']): ?><div style="font-size:12px;color:var(--cf-muted);margin-top:4px;"><?= e($selected['address']) ?></div><?php endif; ?>
                 </div>
@@ -734,14 +734,14 @@ require __DIR__ . '/../inc/header.php';
                     </div>
                     <div>
                         <label>Tutar</label>
-                        <input type="text" name="amount" data-money required placeholder="0,00">
+                        <input type="text" name="amount" data-money inputmode="decimal" required placeholder="0,00">
                     </div>
                 </div>
                 <div><label>Islem Basligi</label><input type="text" name="title" required maxlength="160" placeholder="Orn: Sefer ucreti, mazot, navlun, tahsilat"></div>
                 <div><label>Aciklama</label><textarea name="note" maxlength="500" rows="3" placeholder="Plaka, sefer no, guzergah, yukleme/bosaltma veya odeme aciklamasi"></textarea></div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
                     <button class="btn btn-primary" name="direction" value="debit">Borc Kaydet</button>
-                    <button class="btn btn-ghost" name="direction" value="credit">Alacak / Odeme Kaydet</button>
+                    <button class="btn btn-ghost"   name="direction" value="credit">Alacak / Odeme Kaydet</button>
                 </div>
             </form>
         </div>
@@ -793,15 +793,15 @@ require __DIR__ . '/../inc/header.php';
                 <div class="cf-empty" style="padding:28px;">Bu cariye ait hareket yok.</div>
             <?php else: ?>
             <div class="cf-table-wrap">
-                <table class="cf-table" style="box-shadow:none;border:0;border-radius:0;">
+                <table class="cf-table cf-mobile-cards" style="box-shadow:none;border:0;border-radius:0;">
                     <thead><tr><th>Tarih</th><th>Baslik</th><th>Tur</th><th class="amount">Tutar</th><th></th></tr></thead>
                     <tbody>
                     <?php foreach ($movements as $m): ?>
                         <tr>
-                            <td><?= tr_date($m['tx_date']) ?></td>
-                            <td><strong><?= e($m['title']) ?></strong><?php if ($m['note']): ?><div style="font-size:12px;color:var(--cf-muted);"><?= e($m['note']) ?></div><?php endif; ?></td>
-                            <td><span class="cf-pill <?= $m['direction'] === 'debit' ? 'income' : 'expense' ?>"><?= $m['direction'] === 'debit' ? 'Borc' : 'Alacak' ?></span></td>
-                            <td class="amount <?= $m['direction'] === 'debit' ? 'income' : 'expense' ?>"><?= money($m['amount']) ?></td>
+                            <td data-label="Tarih"><?= tr_date($m['tx_date']) ?></td>
+                            <td data-label="Islem"><strong><?= e($m['title']) ?></strong><?php if ($m['note']): ?><div style="font-size:12px;color:var(--cf-muted);"><?= e($m['note']) ?></div><?php endif; ?></td>
+                            <td data-label="Tur"><span class="cf-pill <?= $m['direction'] === 'debit' ? 'income' : 'expense' ?>"><?= $m['direction'] === 'debit' ? 'Borc' : 'Alacak' ?></span></td>
+                            <td data-label="Tutar" class="amount <?= $m['direction'] === 'debit' ? 'income' : 'expense' ?>"><?= money($m['amount']) ?></td>
                             <td style="text-align:right;">
                                 <form method="post" onsubmit="return confirm('Hareket silinsin mi?');">
                                     <?= csrf_field() ?>

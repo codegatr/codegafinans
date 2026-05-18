@@ -126,7 +126,7 @@ require __DIR__ . '/../inc/header.php';
             </div>
             <div>
                 <label>Tutar (<?= e($user['currency'] ?: 'TRY') ?>)</label>
-                <input type="text" name="amount" data-money required placeholder="0,00">
+                <input type="text" name="amount" data-money inputmode="decimal" required placeholder="0,00">
             </div>
         </div>
         <div class="row">
@@ -155,15 +155,15 @@ require __DIR__ . '/../inc/header.php';
 <?php endif; ?>
 
 <!-- Filtre formu -->
-<form method="get" class="cf-card" style="margin-bottom:18px;display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr 1fr auto;align-items:end;">
+<form method="get" class="cf-card cf-filter-form" style="margin-bottom:18px;display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr auto;align-items:end;">
     <div>
         <label style="font-size:12px;color:var(--cf-text-soft);">Arama</label>
-        <input type="text" name="q" value="<?= e($q) ?>" placeholder="Başlık / not…">
+        <input type="text" name="q" value="<?= e($q) ?>" placeholder="Baslik / not...">
     </div>
     <div>
-        <label style="font-size:12px;color:var(--cf-text-soft);">Tür</label>
+        <label style="font-size:12px;color:var(--cf-text-soft);">Tur</label>
         <select name="type">
-            <option value="">Tümü</option>
+            <option value="">Tumu</option>
             <option value="income"  <?= $type==='income' ?'selected':'' ?>>Gelir</option>
             <option value="expense" <?= $type==='expense'?'selected':'' ?>>Gider</option>
         </select>
@@ -172,10 +172,9 @@ require __DIR__ . '/../inc/header.php';
         <label style="font-size:12px;color:var(--cf-text-soft);">Ay</label>
         <input type="month" name="m" value="<?= e($month) ?>">
     </div>
-    <div></div>
-    <div style="display:flex;gap:8px;">
+    <div class="filter-actions" style="display:flex;gap:8px;">
         <button class="btn btn-ghost">Filtrele</button>
-        <a class="btn btn-outline" href="/transactions.php">Sıfırla</a>
+        <a class="btn btn-outline" href="/transactions.php">Sifirla</a>
     </div>
 </form>
 
@@ -187,13 +186,13 @@ require __DIR__ . '/../inc/header.php';
         </div>
     <?php else: ?>
         <div class="cf-table-wrap">
-            <table class="cf-table" style="box-shadow:none;border:0;border-radius:0;">
+            <table class="cf-table cf-mobile-cards" style="box-shadow:none;border:0;border-radius:0;">
                 <thead>
                     <tr>
                         <th>Tarih</th>
-                        <th>Başlık</th>
+                        <th>Baslik</th>
                         <th>Kategori</th>
-                        <th>Tür</th>
+                        <th>Tur</th>
                         <th class="amount">Tutar</th>
                         <th></th>
                     </tr>
@@ -201,32 +200,32 @@ require __DIR__ . '/../inc/header.php';
                 <tbody>
                 <?php foreach ($rows as $r): ?>
                     <tr>
-                        <td><?= tr_date($r['tx_date']) ?></td>
-                        <td>
+                        <td data-label="Tarih"><?= tr_date($r['tx_date']) ?></td>
+                        <td data-label="Baslik">
                             <strong><?= e($r['title']) ?></strong>
                             <?php if ($r['note']): ?>
                                 <div style="font-size:12px;color:var(--cf-text-soft);"><?= e($r['note']) ?></div>
                             <?php endif; ?>
                         </td>
-                        <td>
+                        <td data-label="Kategori">
                             <?php if ($r['category_name']): ?>
                                 <span class="cf-pill" style="background:<?= e($r['category_color']) ?>22;color:<?= e($r['category_color']) ?>;">
                                     <?= e($r['category_name']) ?>
                                 </span>
                             <?php else: ?>
-                                <span class="cf-pill">—</span>
+                                <span class="cf-pill">&mdash;</span>
                             <?php endif; ?>
                         </td>
-                        <td>
+                        <td data-label="Tur">
                             <span class="cf-pill <?= $r['type']==='income'?'income':'expense' ?>">
                                 <?= $r['type']==='income' ? 'Gelir' : 'Gider' ?>
                             </span>
                         </td>
-                        <td class="amount <?= $r['type']==='income'?'income':'expense' ?>">
-                            <?= ($r['type']==='income'?'+':'−') ?> <?= money($r['amount'], $r['currency']) ?>
+                        <td data-label="Tutar" class="amount <?= $r['type']==='income'?'income':'expense' ?>">
+                            <?= ($r['type']==='income'?'+':'-') ?> <?= money($r['amount'], $r['currency']) ?>
                         </td>
                         <td style="text-align:right;">
-                            <form method="post" style="display:inline;" onsubmit="return confirm('Bu işlem silinsin mi?');">
+                            <form method="post" style="display:inline;" onsubmit="return confirm('Bu islem silinsin mi?');">
                                 <?= csrf_field() ?>
                                 <input type="hidden" name="action" value="delete">
                                 <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">

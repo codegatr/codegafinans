@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.11 - 2026-05-18
+
+- budgets.php aylik butce sayfasinda 500 hatasini gideren SQL placeholder duzeltmesi (v1.0.2'de baska yerlerde duzeltilen ":c iki kere" ve ":u iki kere" pattern'i budgets.php icin de uygulandi).
+- Landing (index.php) sayfasina seffaf fiyatlandirma alani eklendi - defter.net mantigi: plan ucretleri DB'den okunup giris yapmadan gosterilir.
+- Play Store icin tam mobil uyumluluk: sabit alt navigasyon (Anasayfa / Gelir-Gider / Cariler-FAB / Borclar / Butce), iOS safe-area, 48px+ dokunma alanlari, numeric klavye (inputmode=decimal) tum para inputlarinda.
+- Cari modulunde mobilde "Kolay Borc/Alacak Kaydi" kartinin gorunurlugu artirildi (mavi kenar, kalin baslik, kirmizi/yesil aksiyon butonlari, 50px buton).
+- Cari hareketleri, gelir-gider listesi ve cari rapor tablolari mobilde otomatik olarak kart goruntusune donusur (data-label sistemli).
+- transactions.php 5-sutunlu filtre formu mobilde tek sutun + iki-buton-block hale getirildi.
+- debts.php odeme formu mobilde dikey yiginlenir ve tum genisligi alir.
+
 ## 1.0.10 - 2026-05-18
 
 - SMTP zaman asimi hatalari icin daha acik tani mesaji ve 465/ssl alternatif yonlendirmesi eklendi.

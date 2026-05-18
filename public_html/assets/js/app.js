@@ -26,6 +26,9 @@
 
     // Para input girişlerini düzenle (TR locale: 1.234,56)
     document.querySelectorAll('input[data-money]').forEach(function (el) {
+        // Mobil cihazlarda numerik klavye ac
+        if (!el.getAttribute('inputmode')) el.setAttribute('inputmode', 'decimal');
+        if (!el.getAttribute('autocomplete')) el.setAttribute('autocomplete', 'off');
         el.addEventListener('blur', function () {
             const raw = (el.value || '').replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.');
             const num = parseFloat(raw);
