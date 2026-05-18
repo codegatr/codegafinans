@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.15 - 2026-05-18
+
+- Cari sayfası daha sade, mobil öncelikli bir iş akışına dönüştürüldü; seçili cari detayı, hızlı hareket kaydı ve ekstre aksiyonları küçük ekranda tek kolon halinde toparlandı.
+- Cari Hesap Ekstresi PDF/Yazdır aksiyonu mail formundan ayrıldı; yazdırma URL'sine `send_statement_email` parametresi karışması engellendi.
+- Cari ekstre ve cari rapor çıktılarındaki Türkçe metinler, net durum alanları ve belge görünümü müşteriyle paylaşmaya daha uygun hale getirildi.
+- Dashboard ve Cari mobil görünümünde alt menü güvenli boşluğu artırıldı; ortadaki Cariler düğmesinde ikon/yazı üst üste binmesi giderildi.
+- UTF-8/Türkçe karakter kontrolü ve 390px mobil taşma simülasyonu yapıldı.
+
 ## 1.0.14 - 2026-05-18
 
 - Ana sayfa defter.net benzerliğinden ayrıştırıldı; CODEGA'ya özgü finans operasyon paneli kompozisyonu eklendi.
