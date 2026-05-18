@@ -5,11 +5,33 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../inc/admin_auth.php';
+require_once __DIR__ . '/../../inc/mail.php';
 
 $admin = admin_require_role('superadmin', 'admin');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
+    if (($_POST['_action'] ?? '') === 'test_mail') {
+        $to = s($_POST['test_to'] ?? '', 160);
+        if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            flash('danger', 'Test icin gecerli bir e-posta adresi yazin.');
+            redirect('/admin/settings.php');
+        }
+        try {
+            cf_send_mail(
+                $to,
+                'CODEGA Finans test maili',
+                '<p>CODEGA Finans mail ayarlariniz calisiyor.</p><p>Test zamani: ' . e(date('d.m.Y H:i:s')) . '</p>',
+                'CODEGA Finans mail ayarlariniz calisiyor. Test zamani: ' . date('d.m.Y H:i:s')
+            );
+            audit('admin.settings.mail_test', null, (int)$admin['id'], 'to=' . $to);
+            flash('success', 'Test maili gonderildi: ' . $to);
+        } catch (Throwable $e) {
+            flash('danger', 'Test maili gonderilemedi: ' . $e->getMessage());
+        }
+        redirect('/admin/settings.php');
+    }
+
     foreach ($_POST as $key => $val) {
         if ($key === '_token' || str_starts_with($key, '_')) continue;
         if (!preg_match('/^[a-z0-9_]+$/i', $key)) continue;
@@ -93,6 +115,16 @@ require __DIR__ . '/../../inc/admin_header.php';
                 </div>
             <?php endforeach; ?>
             <button class="btn btn-primary" style="justify-self:start;margin-top:6px;">Mail Ayarlarını Kaydet</button>
+        </form>
+
+        <form method="post" class="cf-form" data-once style="margin-top:18px;border-top:1px solid #eef0f4;padding-top:14px;">
+            <?= csrf_field() ?>
+            <input type="hidden" name="_action" value="test_mail">
+            <div>
+                <label>Test Maili Gonder</label>
+                <input type="email" name="test_to" value="<?= e($kv['mail_user'] ?? $kv['contact_email'] ?? '') ?>" placeholder="ornek@alan.com" required>
+            </div>
+            <button class="btn btn-outline" style="justify-self:start;">Test Maili Gonder</button>
         </form>
     </div>
 

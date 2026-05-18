@@ -566,7 +566,7 @@ require __DIR__ . '/../inc/header.php';
     </div>
 <?php else: ?>
 <div class="cf-grid cf-cari-layout">
-    <div class="cf-card" style="padding:0;overflow:hidden;">
+    <div class="cf-card cf-cari-list" style="padding:0;overflow:hidden;">
         <div style="padding:16px 18px;border-bottom:1px solid #eef0f4;">
             <h3 style="margin:0;">Cari Listesi</h3>
         </div>
@@ -592,7 +592,7 @@ require __DIR__ . '/../inc/header.php';
     <?php if ($selected):
         $balance = (float)$selected['balance'];
     ?>
-    <div style="display:grid;gap:14px;">
+    <div class="cf-cari-detail" style="display:grid;gap:14px;">
         <div class="cf-card">
             <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;">
                 <div>
@@ -611,6 +611,31 @@ require __DIR__ . '/../inc/header.php';
                     <span class="cf-pill <?= $balance >= 0 ? 'success' : 'danger' ?>"><?= $balance >= 0 ? 'Alacaklisiniz' : 'Borclusunuz' ?></span>
                 </div>
             </div>
+        </div>
+
+        <div class="cf-card cf-cari-action-card">
+            <h3>Kolay Borc / Alacak Kaydi</h3>
+            <form method="post" class="cf-form" data-once>
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="add_movement">
+                <input type="hidden" name="customer_id" value="<?= (int)$selected['id'] ?>">
+                <div class="row">
+                    <div>
+                        <label>Tarih</label>
+                        <input type="date" name="tx_date" value="<?= e(date('Y-m-d')) ?>" required>
+                    </div>
+                    <div>
+                        <label>Tutar</label>
+                        <input type="text" name="amount" data-money required placeholder="0,00">
+                    </div>
+                </div>
+                <div><label>Baslik</label><input type="text" name="title" required maxlength="160" placeholder="Orn: Fatura, odeme, tahsilat"></div>
+                <div><label>Not</label><input type="text" name="note" maxlength="500"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="btn btn-primary" name="direction" value="debit">Borc Kaydet</button>
+                    <button class="btn btn-ghost" name="direction" value="credit">Alacak / Odeme Kaydet</button>
+                </div>
+            </form>
         </div>
 
         <div class="cf-card">
@@ -643,34 +668,6 @@ require __DIR__ . '/../inc/header.php';
                 <div class="muted" style="font-size:12px;">
                     Alici: <?= e($selected['email'] ?: 'Bu caride e-posta adresi yok') ?>
                 </div>
-            </form>
-        </div>
-
-        <div class="cf-card">
-            <h3>Yeni Hareket</h3>
-            <form method="post" class="cf-form" data-once>
-                <?= csrf_field() ?>
-                <input type="hidden" name="action" value="add_movement">
-                <input type="hidden" name="customer_id" value="<?= (int)$selected['id'] ?>">
-                <div class="row">
-                    <div>
-                        <label>Islem Turu</label>
-                        <select name="direction">
-                            <option value="debit">Borclandir - cari size borclu</option>
-                            <option value="credit">Alacaklandir / odeme - siz borclusunuz veya tahsilat</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label>Tarih</label>
-                        <input type="date" name="tx_date" value="<?= e(date('Y-m-d')) ?>" required>
-                    </div>
-                </div>
-                <div class="row">
-                    <div><label>Baslik</label><input type="text" name="title" required maxlength="160" placeholder="Orn: Fatura, odeme, tahsilat"></div>
-                    <div><label>Tutar</label><input type="text" name="amount" data-money required placeholder="0,00"></div>
-                </div>
-                <div><label>Not</label><input type="text" name="note" maxlength="500"></div>
-                <button class="btn btn-primary" style="justify-self:start;">Hareket Kaydet</button>
             </form>
         </div>
 

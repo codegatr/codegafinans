@@ -298,9 +298,13 @@ a:hover { color: var(--cf-primary-2); }
 @media (max-width: 900px) {
     .cf-grid-3, .cf-grid-4 { grid-template-columns: repeat(2, 1fr); }
     .cf-cari-layout { grid-template-columns: 1fr; }
+    .cf-cari-detail { order: 1; }
+    .cf-cari-list { order: 2; }
 }
 @media (max-width: 560px) {
     .cf-grid-3, .cf-grid-4, .cf-grid-2 { grid-template-columns: 1fr; }
+    .cf-cari-action-card { border: 1px solid rgba(37,99,235,.18); box-shadow: 0 14px 34px rgba(37,99,235,.12); }
+    .cf-cari-action-card .btn { width: 100%; justify-content: center; }
 }
 
 .cf-card {

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.9 - 2026-05-18
+
+- Yonetim paneli Mail / SMTP Ayarlari bolumune Test Maili Gonder aksiyonu eklendi.
+- Cari detayinda kolay Borc / Alacak Kaydi karti one alindi.
+- Mobil gorunumde secili cari ve hizli hareket kaydi cari listesinden once gosterilecek sekilde duzenlendi.
+
 ## 1.0.8 - 2026-05-18
 
 - Yonetim paneli Ayarlar ekranina Mail / SMTP Ayarlari karti eklendi.
