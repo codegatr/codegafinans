@@ -98,6 +98,11 @@ if (!defined('CF_GRACE_DAYS'))       define('CF_GRACE_DAYS',       3);
  * -------------------------------------------------------------------------- */
 if (!defined('CF_MAIL_FROM'))      define('CF_MAIL_FROM',      'finans@codega.com.tr');
 if (!defined('CF_MAIL_FROM_NAME')) define('CF_MAIL_FROM_NAME', 'CODEGA Finans');
+if (!defined('CF_MAIL_HOST'))      define('CF_MAIL_HOST',      '');
+if (!defined('CF_MAIL_PORT'))      define('CF_MAIL_PORT',      587);
+if (!defined('CF_MAIL_USER'))      define('CF_MAIL_USER',      '');
+if (!defined('CF_MAIL_PASS'))      define('CF_MAIL_PASS',      '');
+if (!defined('CF_MAIL_SECURE'))    define('CF_MAIL_SECURE',    'tls');
 if (!defined('CF_ADMIN_MAIL'))     define('CF_ADMIN_MAIL',     'yunus@codega.com.tr');
 
 /* --------------------------------------------------------------------------

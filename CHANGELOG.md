@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.7 - 2026-05-18
+
+- Cari kart detayina Cari Hesap Ekstresi bolumu eklendi.
+- Cari ekstresi tanimli musteri e-postasina SMTP uzerinden gonderilebilir hale getirildi.
+- Cari ekstresi tarih araligiyla PDF/Yazdir ekranindan alinabilir hale getirildi.
+
 ## 1.0.6 - 2026-05-18
 
 - Cari hesaplar ekranina tarih filtreli Cari Rapor eklendi.

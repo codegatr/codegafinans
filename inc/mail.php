@@ -1,0 +1,122 @@
+<?php
+/**
+ * CODEGA Finans - SMTP mail helper
+ */
+declare(strict_types=1);
+
+require_once __DIR__ . '/functions.php';
+
+function cf_mail_header_encode(string $value): string
+{
+    return '=?UTF-8?B?' . base64_encode($value) . '?=';
+}
+
+function cf_mail_read_line($socket): string
+{
+    $line = fgets($socket, 515);
+    if ($line === false) {
+        throw new RuntimeException('SMTP sunucusundan yanit alinamadi.');
+    }
+    return $line;
+}
+
+function cf_mail_expect($socket, array $codes): string
+{
+    $response = '';
+    do {
+        $line = cf_mail_read_line($socket);
+        $response .= $line;
+        $more = isset($line[3]) && $line[3] === '-';
+    } while ($more);
+
+    $code = (int)substr($response, 0, 3);
+    if (!in_array($code, $codes, true)) {
+        throw new RuntimeException('SMTP hata: ' . trim($response));
+    }
+    return $response;
+}
+
+function cf_mail_write($socket, string $command): void
+{
+    fwrite($socket, $command . "\r\n");
+}
+
+function cf_send_mail(string $to, string $subject, string $html, ?string $text = null): bool
+{
+    $to = trim($to);
+    if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+        throw new InvalidArgumentException('Gecerli bir alici e-posta adresi yok.');
+    }
+
+    $host = defined('CF_MAIL_HOST') ? (string)CF_MAIL_HOST : '';
+    $port = defined('CF_MAIL_PORT') ? (int)CF_MAIL_PORT : 587;
+    $user = defined('CF_MAIL_USER') ? (string)CF_MAIL_USER : '';
+    $pass = defined('CF_MAIL_PASS') ? (string)CF_MAIL_PASS : '';
+    $secure = defined('CF_MAIL_SECURE') ? strtolower((string)CF_MAIL_SECURE) : 'tls';
+    $from = defined('CF_MAIL_FROM') ? (string)CF_MAIL_FROM : $user;
+    $fromName = defined('CF_MAIL_FROM_NAME') ? (string)CF_MAIL_FROM_NAME : CF_APP_NAME;
+
+    if ($host === '' || $user === '' || $pass === '' || $from === '' || str_contains($pass, 'GMAIL-UYGULAMA')) {
+        throw new RuntimeException('SMTP ayarlari eksik. inc/config.local.php icinde CF_MAIL_HOST, CF_MAIL_USER ve CF_MAIL_PASS tanimlanmali.');
+    }
+
+    $transport = $secure === 'ssl' ? 'ssl://' : '';
+    $socket = @stream_socket_client($transport . $host . ':' . $port, $errno, $errstr, 20, STREAM_CLIENT_CONNECT);
+    if (!$socket) {
+        throw new RuntimeException('SMTP baglantisi kurulamadi: ' . $errstr);
+    }
+
+    stream_set_timeout($socket, 20);
+    try {
+        cf_mail_expect($socket, [220]);
+        cf_mail_write($socket, 'EHLO ' . (parse_url(CF_APP_URL, PHP_URL_HOST) ?: 'localhost'));
+        cf_mail_expect($socket, [250]);
+
+        if ($secure === 'tls') {
+            cf_mail_write($socket, 'STARTTLS');
+            cf_mail_expect($socket, [220]);
+            if (!stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+                throw new RuntimeException('SMTP TLS baslatilamadi.');
+            }
+            cf_mail_write($socket, 'EHLO ' . (parse_url(CF_APP_URL, PHP_URL_HOST) ?: 'localhost'));
+            cf_mail_expect($socket, [250]);
+        }
+
+        cf_mail_write($socket, 'AUTH LOGIN');
+        cf_mail_expect($socket, [334]);
+        cf_mail_write($socket, base64_encode($user));
+        cf_mail_expect($socket, [334]);
+        cf_mail_write($socket, base64_encode($pass));
+        cf_mail_expect($socket, [235]);
+
+        cf_mail_write($socket, 'MAIL FROM:<' . $from . '>');
+        cf_mail_expect($socket, [250]);
+        cf_mail_write($socket, 'RCPT TO:<' . $to . '>');
+        cf_mail_expect($socket, [250, 251]);
+        cf_mail_write($socket, 'DATA');
+        cf_mail_expect($socket, [354]);
+
+        $boundary = 'cf_' . bin2hex(random_bytes(12));
+        $text = $text ?: trim(strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $html)));
+        $headers = [
+            'Date: ' . date(DATE_RFC2822),
+            'From: ' . cf_mail_header_encode($fromName) . ' <' . $from . '>',
+            'To: <' . $to . '>',
+            'Subject: ' . cf_mail_header_encode($subject),
+            'MIME-Version: 1.0',
+            'Content-Type: multipart/alternative; boundary="' . $boundary . '"',
+        ];
+        $message = implode("\r\n", $headers) . "\r\n\r\n";
+        $message .= '--' . $boundary . "\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" . chunk_split(base64_encode($text));
+        $message .= "\r\n--" . $boundary . "\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" . chunk_split(base64_encode($html));
+        $message .= "\r\n--" . $boundary . "--\r\n";
+        $message = preg_replace('/^\./m', '..', $message);
+
+        fwrite($socket, $message . "\r\n.\r\n");
+        cf_mail_expect($socket, [250]);
+        cf_mail_write($socket, 'QUIT');
+        return true;
+    } finally {
+        fclose($socket);
+    }
+}
