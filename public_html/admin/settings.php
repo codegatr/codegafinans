@@ -17,8 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (cf_str_len($val) > 4000) $val = cf_str_sub($val, 0, 4000);
         db_exec(
             'INSERT INTO ' . t('settings') . ' (key_name, value)
-             VALUES (:k, :v) ON DUPLICATE KEY UPDATE value = :v',
-            [':k' => $key, ':v' => $val]
+             VALUES (:k, :v_insert) ON DUPLICATE KEY UPDATE value = :v_update',
+            [':k' => $key, ':v_insert' => $val, ':v_update' => $val]
         );
     }
     audit('admin.settings.update', null, (int)$admin['id']);

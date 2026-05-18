@@ -79,9 +79,12 @@ function rates_refresh_from_tcmb(): array
 
     db_exec(
         'INSERT INTO ' . t('settings') . ' (key_name, value)
-         VALUES ("rates_last_at", :v)
-         ON DUPLICATE KEY UPDATE value = :v',
-        [':v' => date('Y-m-d H:i:s')]
+         VALUES ("rates_last_at", :v_insert)
+         ON DUPLICATE KEY UPDATE value = :v_update',
+        [
+            ':v_insert' => date('Y-m-d H:i:s'),
+            ':v_update' => date('Y-m-d H:i:s'),
+        ]
     );
 
     return ['ok' => true, 'updated' => $updated];
