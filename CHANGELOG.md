@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.5 - 2026-05-18
+
+- Smart Update uyumlulugu icin manifest tracked_paths dosya bazli hale getirildi.
+- Eski updater surumlerinde klasor kopyalama basarisiz olsa bile tum uygulama dosyalari tek tek kopyalanacak.
+- Cari hesap modulu ve updater duzeltmeleri bu pakette korunur.
+
 ## 1.0.4 - 2026-05-18
 
 - Smart Update paket kokunu daha saglam bulacak sekilde guncellendi.
@@ -25,3 +31,4 @@
 - SSH olmayan hostingler icin tek seferlik `setup_admin.php` ilk yonetici kurulumu eklendi.
 - Yonetim panelinde ana icerigin sidebar altina dusmesine neden olan backdrop layout hatasi duzeltildi.
 - `mbstring` kapali hostinglerde giris ve panel ekranlari icin guvenli metin fallback helper'lari eklendi.
+
