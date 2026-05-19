@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.22 - 2026-05-19
+
+- Cari ekstre ve cari rapor PDF çıktıları düz metin görünümünden çıkarıldı; başlık, bilgi kutuları, özet kartları ve hizalı tablo düzeniyle profesyonel belge tasarımına alındı.
+
 ## 1.0.21 - 2026-05-19
 
 - Cari borç/alacak hareketlerine zorunlu vade tarihi eklendi.

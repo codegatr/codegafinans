@@ -311,16 +311,9 @@ function cari_report_html(array $rows, ?string $from, ?string $to, array $user, 
 function cari_pdf_ascii(string $text): string
 {
     $text = str_replace(["\r", "\n", "\t"], ' ', $text);
-    $text = strtr($text, [
-        'ğ' => 'g', 'Ğ' => 'G', 'ü' => 'u', 'Ü' => 'U', 'ş' => 's', 'Ş' => 'S',
-        'ı' => 'i', 'İ' => 'I', 'ö' => 'o', 'Ö' => 'O', 'ç' => 'c', 'Ç' => 'C',
-        '₺' => 'TL', '–' => '-', '—' => '-', '’' => "'", '“' => '"', '”' => '"',
-    ]);
     if (function_exists('iconv')) {
         $converted = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
-        if ($converted !== false) {
-            $text = $converted;
-        }
+        if ($converted !== false) { $text = $converted; }
     }
     $text = preg_replace('/[^\x20-\x7E]/', ' ', $text) ?? $text;
     return trim(preg_replace('/\s+/', ' ', $text) ?? $text);
@@ -332,69 +325,55 @@ function cari_pdf_text(string $text): string
     return '(' . str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $text) . ')';
 }
 
-function cari_pdf_wrap(string $text, int $limit = 92): array
+function cari_pdf_fit(string $text, int $max = 42): string
 {
     $text = cari_pdf_ascii($text);
-    $words = preg_split('/\s+/', trim($text)) ?: [];
-    $lines = [];
-    $line = '';
-    foreach ($words as $word) {
-        $candidate = $line === '' ? $word : $line . ' ' . $word;
-        if (strlen($candidate) > $limit) {
-            if ($line !== '') {
-                $lines[] = $line;
-            }
-            $line = $word;
-        } else {
-            $line = $candidate;
-        }
-    }
-    if ($line !== '') {
-        $lines[] = $line;
-    }
-    return $lines ?: [''];
+    return strlen($text) > $max ? substr($text, 0, max(0, $max - 3)) . '...' : $text;
 }
 
-function cari_pdf_document(string $title, array $lines): string
+function cari_pdf_money($value): string
+{
+    return cari_pdf_ascii(money($value));
+}
+
+function cari_pdf_rect(float $x, float $y, float $w, float $h, string $fill, ?string $stroke = null): string
+{
+    $cmd = $fill . " rg\n{$x} {$y} {$w} {$h} re f\n";
+    if ($stroke) { $cmd .= $stroke . " RG\n0.6 w\n{$x} {$y} {$w} {$h} re S\n"; }
+    return $cmd;
+}
+
+function cari_pdf_line(float $x1, float $y1, float $x2, float $y2, string $stroke = '0.82 0.86 0.92', float $width = 0.6): string
+{
+    return $stroke . " RG\n{$width} w\n{$x1} {$y1} m {$x2} {$y2} l S\n";
+}
+
+function cari_pdf_label(float $x, float $y, string $text, string $font = 'F1', int $size = 9, string $rgb = '0.29 0.38 0.52'): string
+{
+    return "BT\n/{$font} {$size} Tf\n{$rgb} rg\n{$x} {$y} Td\n" . cari_pdf_text($text) . " Tj\nET\n";
+}
+
+function cari_pdf_build(array $pageContents): string
 {
     $objects = [];
     $pageRefs = [];
-    $chunks = array_chunk($lines, 42);
-    $pageCount = max(1, count($chunks));
     $catalogObj = 1;
     $pagesObj = 2;
     $fontObj = 3;
     $fontBoldObj = 4;
     $nextObj = 5;
-
-    foreach ($chunks as $pageIndex => $chunk) {
-        $content = "0.95 0.97 1 rg\n0 0 595 842 re f\n";
-        $content .= "1 1 1 rg\n34 32 527 778 re f\n";
-        $content .= "0.07 0.09 0.16 RG\n2 w\n48 730 499 0 m S\n";
-        $content .= "0.02 0.08 0.18 rg\n";
-        $content .= "BT\n/F2 18 Tf\n48 790 Td\n" . cari_pdf_text($title) . " Tj\n";
-        $content .= "/F1 9 Tf\n0 -18 Td\n" . cari_pdf_text('Olusturma: ' . date('d.m.Y H:i') . ' | Sayfa ' . ($pageIndex + 1) . '/' . $pageCount) . " Tj\n";
-        $content .= "/F1 10 Tf\n0 -34 Td\n";
-        foreach ($chunk as $lineIndex => $line) {
-            if ($lineIndex > 0) {
-                $content .= "0 -14 Td\n";
-            }
-            $content .= cari_pdf_text((string)$line) . " Tj\n";
-        }
-        $content .= "ET\n";
+    foreach ($pageContents as $content) {
         $contentObj = $nextObj++;
         $pageObj = $nextObj++;
         $objects[$contentObj] = "<< /Length " . strlen($content) . " >>\nstream\n" . $content . "endstream";
         $objects[$pageObj] = "<< /Type /Page /Parent {$pagesObj} 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 {$fontObj} 0 R /F2 {$fontBoldObj} 0 R >> >> /Contents {$contentObj} 0 R >>";
         $pageRefs[] = "{$pageObj} 0 R";
     }
-
     $objects[$catalogObj] = "<< /Type /Catalog /Pages {$pagesObj} 0 R >>";
     $objects[$pagesObj] = "<< /Type /Pages /Kids [" . implode(' ', $pageRefs) . "] /Count " . count($pageRefs) . " >>";
     $objects[$fontObj] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>";
     $objects[$fontBoldObj] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>";
     ksort($objects);
-
     $pdf = "%PDF-1.4\n%\xE2\xE3\xCF\xD3\n";
     $offsets = [0];
     foreach ($objects as $num => $body) {
@@ -403,11 +382,40 @@ function cari_pdf_document(string $title, array $lines): string
     }
     $xref = strlen($pdf);
     $pdf .= "xref\n0 " . (count($objects) + 1) . "\n0000000000 65535 f \n";
-    for ($i = 1; $i <= count($objects); $i++) {
-        $pdf .= sprintf("%010d 00000 n \n", $offsets[$i] ?? 0);
-    }
+    for ($i = 1; $i <= count($objects); $i++) { $pdf .= sprintf("%010d 00000 n \n", $offsets[$i] ?? 0); }
     $pdf .= "trailer\n<< /Size " . (count($objects) + 1) . " /Root {$catalogObj} 0 R >>\nstartxref\n{$xref}\n%%EOF";
     return $pdf;
+}
+
+function cari_pdf_base(string $docTitle, string $period, string $sender, string $contact, int $page, int $pages): string
+{
+    $c = "0.94 0.97 1 rg\n0 0 595 842 re f\n";
+    $c .= cari_pdf_rect(34, 32, 527, 778, '1 1 1', '0.85 0.89 0.94');
+    $c .= cari_pdf_label(54, 778, $sender, 'F2', 22, '0.02 0.08 0.18');
+    $c .= cari_pdf_label(54, 756, 'CARI MUTABAKAT BELGESI', 'F2', 10, '0.02 0.48 0.42');
+    $c .= cari_pdf_label(54, 738, $contact, 'F1', 10, '0.30 0.39 0.52');
+    $c .= cari_pdf_label(382, 778, $docTitle, 'F2', 20, '0.02 0.08 0.18');
+    $c .= cari_pdf_label(430, 756, $period, 'F1', 11, '0.30 0.39 0.52');
+    $c .= cari_pdf_label(492, 738, 'Sayfa ' . $page . '/' . $pages, 'F1', 9, '0.30 0.39 0.52');
+    $c .= cari_pdf_line(54, 718, 541, 718, '0.07 0.09 0.16', 2);
+    return $c;
+}
+
+function cari_pdf_info_box(float $x, float $y, float $w, string $label, string $value, string $sub = ''): string
+{
+    $c = cari_pdf_rect($x, $y, $w, 56, '0.98 0.99 1', '0.84 0.88 0.94');
+    $c .= cari_pdf_label($x + 12, $y + 38, strtoupper($label), 'F1', 8, '0.30 0.39 0.52');
+    $c .= cari_pdf_label($x + 12, $y + 20, cari_pdf_fit($value, 31), 'F2', 12, '0.02 0.08 0.18');
+    if ($sub !== '') { $c .= cari_pdf_label($x + 12, $y + 8, cari_pdf_fit($sub, 35), 'F1', 8, '0.30 0.39 0.52'); }
+    return $c;
+}
+
+function cari_pdf_summary_box(float $x, float $y, float $w, string $label, string $value, string $fill): string
+{
+    $c = cari_pdf_rect($x, $y, $w, 64, $fill);
+    $c .= cari_pdf_label($x + 12, $y + 42, $label, 'F2', 10, '1 1 1');
+    $c .= cari_pdf_label($x + 12, $y + 16, $value, 'F2', 18, '1 1 1');
+    return $c;
 }
 
 function cari_statement_pdf(array $customer, array $rows, ?string $from, ?string $to, array $user): string
@@ -415,72 +423,105 @@ function cari_statement_pdf(array $customer, array $rows, ?string $from, ?string
     [$debit, $credit, $balance] = cari_statement_totals($rows);
     $senderName = cari_user_name($user);
     $senderContact = cari_user_contact($user);
-    $lines = [
-        $senderName . ' - Cari Hesap Ekstresi',
-        'Gonderen iletisim: ' . $senderContact,
-        'Donem: ' . cari_doc_period($from, $to),
-        'Cari: ' . (string)$customer['name'],
-        'E-posta / Telefon: ' . (($customer['email'] ?: '-') . ' / ' . ($customer['phone'] ?: '-')),
-        'Hazirlayan: ' . $senderName . ' / ' . $senderContact,
-        'Toplam Borc: ' . money($debit) . ' | Toplam Alacak/Odeme: ' . money($credit) . ' | Net: ' . money(abs($balance)) . ' ' . ($balance >= 0 ? 'Alacak' : 'Borc'),
-        str_repeat('-', 100),
-        'Tarih | Islem / Aciklama | Vade | Borc | Alacak | Ara Bakiye',
-    ];
+    $period = cari_doc_period($from, $to);
+    $chunks = array_chunk($rows, 16);
+    if (!$chunks) { $chunks = [[]]; }
+    $pages = count($chunks);
     $running = 0.0;
-    foreach ($rows as $row) {
-        $amount = (float)$row['amount'];
-        $running += $row['direction'] === 'debit' ? $amount : -$amount;
-        $line = tr_date($row['tx_date']) . ' | ' . $row['title'];
-        if (!empty($row['note'])) {
-            $line .= ' - ' . $row['note'];
+    $pageContents = [];
+    foreach ($chunks as $pageIndex => $chunk) {
+        $c = cari_pdf_base('Cari Hesap Ekstresi', $period, $senderName, $senderContact, $pageIndex + 1, $pages);
+        if ($pageIndex === 0) {
+            $c .= cari_pdf_info_box(54, 644, 155, 'Cari unvani', (string)$customer['name']);
+            $c .= cari_pdf_info_box(220, 644, 155, 'E-posta / Telefon', ($customer['email'] ?: '-') . ' / ' . ($customer['phone'] ?: '-'));
+            $c .= cari_pdf_info_box(386, 644, 155, 'Hazirlayan', $senderName, $senderContact);
+            $netText = cari_pdf_money(abs($balance)) . ' ' . ($balance >= 0 ? 'Alacak' : 'Borc');
+            $c .= cari_pdf_summary_box(54, 560, 155, 'Toplam Borc', cari_pdf_money($debit), '0.15 0.38 0.92');
+            $c .= cari_pdf_summary_box(220, 560, 155, 'Toplam Alacak / Odeme', cari_pdf_money($credit), '0.05 0.48 0.42');
+            $c .= cari_pdf_summary_box(386, 560, 155, 'Net Durum', $netText, '0.07 0.10 0.17');
+            $tableY = 522;
+        } else {
+            $tableY = 674;
         }
-        $line .= ' | ' . (!empty($row['due_date']) ? tr_date($row['due_date']) : '-');
-        $line .= ' | ' . ($row['direction'] === 'debit' ? money($amount) : '-');
-        $line .= ' | ' . ($row['direction'] === 'credit' ? money($amount) : '-');
-        $line .= ' | ' . money(abs($running)) . ' ' . ($running >= 0 ? 'Alacak' : 'Borc');
-        array_push($lines, ...cari_pdf_wrap($line));
+        $c .= cari_pdf_label(54, $tableY + 18, 'Olusturma zamani: ' . date('d.m.Y H:i') . '   Donem: ' . $period, 'F1', 9, '0.30 0.39 0.52');
+        $c .= cari_pdf_rect(54, $tableY - 8, 487, 24, '0.95 0.97 0.99');
+        $c .= cari_pdf_label(60, $tableY, 'Tarih', 'F2', 8, '0.20 0.27 0.36');
+        $c .= cari_pdf_label(118, $tableY, 'Islem / Aciklama', 'F2', 8, '0.20 0.27 0.36');
+        $c .= cari_pdf_label(292, $tableY, 'Vade', 'F2', 8, '0.20 0.27 0.36');
+        $c .= cari_pdf_label(350, $tableY, 'Borc', 'F2', 8, '0.20 0.27 0.36');
+        $c .= cari_pdf_label(414, $tableY, 'Alacak', 'F2', 8, '0.20 0.27 0.36');
+        $c .= cari_pdf_label(478, $tableY, 'Ara Bakiye', 'F2', 8, '0.20 0.27 0.36');
+        $y = $tableY - 28;
+        foreach ($chunk as $row) {
+            $amount = (float)$row['amount'];
+            $running += $row['direction'] === 'debit' ? $amount : -$amount;
+            $c .= cari_pdf_line(54, $y + 16, 541, $y + 16, '0.89 0.92 0.96', 0.5);
+            $c .= cari_pdf_label(60, $y, tr_date($row['tx_date']), 'F1', 8, '0.02 0.08 0.18');
+            $c .= cari_pdf_label(118, $y, cari_pdf_fit((string)$row['title'], 31), 'F2', 8, '0.02 0.08 0.18');
+            if (!empty($row['note'])) { $c .= cari_pdf_label(118, $y - 11, cari_pdf_fit((string)$row['note'], 36), 'F1', 7, '0.39 0.45 0.55'); }
+            $c .= cari_pdf_label(292, $y, !empty($row['due_date']) ? tr_date($row['due_date']) : '-', 'F1', 8, '0.02 0.08 0.18');
+            $c .= cari_pdf_label(350, $y, $row['direction'] === 'debit' ? cari_pdf_money($amount) : '-', 'F1', 8, '0.02 0.08 0.18');
+            $c .= cari_pdf_label(414, $y, $row['direction'] === 'credit' ? cari_pdf_money($amount) : '-', 'F1', 8, '0.02 0.08 0.18');
+            $c .= cari_pdf_label(478, $y, cari_pdf_money(abs($running)) . ' ' . ($running >= 0 ? 'Alacak' : 'Borc'), 'F1', 8, '0.02 0.08 0.18');
+            $y -= 30;
+        }
+        if (!$chunk) { $c .= cari_pdf_label(60, $y, 'Bu donem icin hareket yok.', 'F1', 10, '0.39 0.45 0.55'); }
+        $c .= cari_pdf_line(54, 86, 541, 86, '0.89 0.92 0.96', 0.6);
+        $c .= cari_pdf_label(54, 66, 'Bu ekstre bilgilendirme ve mutabakat amaciyla olusturulmustur.', 'F1', 9, '0.30 0.39 0.52');
+        $pageContents[] = $c;
     }
-    if (!$rows) {
-        $lines[] = 'Bu donem icin hareket yok.';
-    }
-    $lines[] = str_repeat('-', 100);
-    $lines[] = 'Bu ekstre bilgilendirme ve mutabakat amaciyla olusturulmustur.';
-    return cari_pdf_document('Cari Hesap Ekstresi', $lines);
+    return cari_pdf_build($pageContents);
 }
 
 function cari_report_pdf(array $rows, ?string $from, ?string $to, array $user, ?array $reportCustomer = null): string
 {
     $debit = 0.0; $credit = 0.0;
-    foreach ($rows as $row) {
-        $debit += (float)$row['debit_total'];
-        $credit += (float)$row['credit_total'];
-    }
+    foreach ($rows as $row) { $debit += (float)$row['debit_total']; $credit += (float)$row['credit_total']; }
     $net = $debit - $credit;
     $senderName = cari_user_name($user);
     $senderContact = cari_user_contact($user);
+    $period = cari_doc_period($from, $to);
     $title = $reportCustomer ? 'Musteri Cari Raporu' : 'Cari Raporu';
-    $lines = [
-        $senderName . ' - ' . $title,
-        'Gonderen iletisim: ' . $senderContact,
-        'Donem: ' . cari_doc_period($from, $to),
-        'Hazirlayan: ' . $senderName . ' / ' . $senderContact,
-        'Rapor kapsami: ' . (string)($reportCustomer['name'] ?? (count($rows) . ' cari')),
-        'Toplam Borc: ' . money($debit) . ' | Toplam Alacak/Odeme: ' . money($credit) . ' | Net Portfoy: ' . money(abs($net)) . ' ' . ($net >= 0 ? 'Alacak' : 'Borc'),
-        str_repeat('-', 100),
-        'Cari | Iletisim | Borc | Alacak | Net Bakiye | Son Hareket',
-    ];
-    foreach ($rows as $row) {
-        $balance = (float)$row['balance'];
-        $line = $row['name'] . ' | ' . ($row['phone'] ?: '-') . ' / ' . ($row['email'] ?: '-');
-        $line .= ' | ' . money($row['debit_total']) . ' | ' . money($row['credit_total']);
-        $line .= ' | ' . money(abs($balance)) . ' ' . ($balance >= 0 ? 'Alacak' : 'Borc');
-        $line .= ' | ' . ($row['last_tx_date'] ? tr_date($row['last_tx_date']) : '-');
-        array_push($lines, ...cari_pdf_wrap($line));
+    $chunks = array_chunk($rows, 18);
+    if (!$chunks) { $chunks = [[]]; }
+    $pages = count($chunks);
+    $pageContents = [];
+    foreach ($chunks as $pageIndex => $chunk) {
+        $c = cari_pdf_base($title, $period, $senderName, $senderContact, $pageIndex + 1, $pages);
+        if ($pageIndex === 0) {
+            $c .= cari_pdf_info_box(54, 644, 155, 'Raporu hazirlayan', $senderName, $senderContact);
+            $c .= cari_pdf_info_box(220, 644, 155, 'Rapor kapsami', (string)($reportCustomer['name'] ?? (count($rows) . ' cari')));
+            $c .= cari_pdf_info_box(386, 644, 155, 'Olusturma zamani', date('d.m.Y H:i'));
+            $c .= cari_pdf_summary_box(54, 560, 155, 'Toplam Borc', cari_pdf_money($debit), '0.15 0.38 0.92');
+            $c .= cari_pdf_summary_box(220, 560, 155, 'Toplam Alacak', cari_pdf_money($credit), '0.05 0.48 0.42');
+            $c .= cari_pdf_summary_box(386, 560, 155, 'Net Portfoy', cari_pdf_money(abs($net)) . ' ' . ($net >= 0 ? 'Alacak' : 'Borc'), '0.07 0.10 0.17');
+            $tableY = 522;
+        } else { $tableY = 674; }
+        $c .= cari_pdf_rect(54, $tableY - 8, 487, 24, '0.95 0.97 0.99');
+        $c .= cari_pdf_label(60, $tableY, 'Cari', 'F2', 8, '0.20 0.27 0.36');
+        $c .= cari_pdf_label(206, $tableY, 'Iletisim', 'F2', 8, '0.20 0.27 0.36');
+        $c .= cari_pdf_label(318, $tableY, 'Borc', 'F2', 8, '0.20 0.27 0.36');
+        $c .= cari_pdf_label(382, $tableY, 'Alacak', 'F2', 8, '0.20 0.27 0.36');
+        $c .= cari_pdf_label(446, $tableY, 'Net Bakiye', 'F2', 8, '0.20 0.27 0.36');
+        $c .= cari_pdf_label(510, $tableY, 'Son', 'F2', 8, '0.20 0.27 0.36');
+        $y = $tableY - 28;
+        foreach ($chunk as $row) {
+            $balance = (float)$row['balance'];
+            $c .= cari_pdf_line(54, $y + 16, 541, $y + 16, '0.89 0.92 0.96', 0.5);
+            $c .= cari_pdf_label(60, $y, cari_pdf_fit((string)$row['name'], 24), 'F2', 8, '0.02 0.08 0.18');
+            $c .= cari_pdf_label(206, $y, cari_pdf_fit(($row['phone'] ?: '-') . ' / ' . ($row['email'] ?: '-'), 20), 'F1', 8, '0.02 0.08 0.18');
+            $c .= cari_pdf_label(318, $y, cari_pdf_money($row['debit_total']), 'F1', 8, '0.02 0.08 0.18');
+            $c .= cari_pdf_label(382, $y, cari_pdf_money($row['credit_total']), 'F1', 8, '0.02 0.08 0.18');
+            $c .= cari_pdf_label(446, $y, cari_pdf_money(abs($balance)) . ' ' . ($balance >= 0 ? 'Alacak' : 'Borc'), 'F1', 8, '0.02 0.08 0.18');
+            $c .= cari_pdf_label(510, $y, $row['last_tx_date'] ? tr_date($row['last_tx_date']) : '-', 'F1', 8, '0.02 0.08 0.18');
+            $y -= 28;
+        }
+        if (!$chunk) { $c .= cari_pdf_label(60, $y, 'Raporlanacak cari bulunamadi.', 'F1', 10, '0.39 0.45 0.55'); }
+        $c .= cari_pdf_line(54, 86, 541, 86, '0.89 0.92 0.96', 0.6);
+        $c .= cari_pdf_label(54, 66, 'Cari risk, tahsilat ve odeme takibi icin hazirlanmistir.', 'F1', 9, '0.30 0.39 0.52');
+        $pageContents[] = $c;
     }
-    if (!$rows) {
-        $lines[] = 'Raporlanacak cari bulunamadi.';
-    }
-    return cari_pdf_document($title, $lines);
+    return cari_pdf_build($pageContents);
 }
 
 $reportFrom = isset($_GET['from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$_GET['from']) ? (string)$_GET['from'] : null;
