@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.18 - 2026-05-19
+
+- Cari Hesaplar ekranı sadeleştirildi; rapor alanı ayrı `Raporlar` sayfasına taşındı.
+- Sol menü ve mobil alt menüye ayrı Raporlar sekmesi eklendi.
+- Cari detay, hızlı borç/alacak, ekstre ve hareketler yalnızca cari seçildikten sonra açılacak hale getirildi.
+- Hızlı borç/alacak formu tutar, tarih ve açıklama odaklı daha kısa hale getirildi.
+- Raporlar sayfasında müşteri bazlı cari hesap özeti, PDF, CSV ve PDF mail akışları korundu.
+
 ## 1.0.17 - 2026-05-19
 
 - Cari ekstre ve cari rapor belgelerinde üst marka alanı işlemi yapan kullanıcının adı ve iletişim bilgisiyle değiştirildi.

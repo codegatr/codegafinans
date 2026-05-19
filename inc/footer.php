@@ -17,9 +17,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
         <span>Cariler</span>
     </a>
-    <a href="/debts.php"        class="<?= str_contains($_SERVER['REQUEST_URI'] ?? '', 'debts.php')        ? 'active' : '' ?>" aria-label="Borçlar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 12h20"/></svg>
-        <span>Borçlar</span>
+    <a href="/reports.php"      class="<?= str_contains($_SERVER['REQUEST_URI'] ?? '', 'reports.php')      ? 'active' : '' ?>" aria-label="Raporlar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V4a2 2 0 0 1 2-2h10l4 4v13.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>
+        <span>Raporlar</span>
     </a>
     <a href="/budgets.php"      class="<?= str_contains($_SERVER['REQUEST_URI'] ?? '', 'budgets.php')      ? 'active' : '' ?>" aria-label="Bütçe">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>

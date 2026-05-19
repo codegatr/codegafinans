@@ -704,7 +704,6 @@ $customers = db_all(
 );
 
 $selectedId = isset($_GET['id']) ? intval_safe($_GET['id'], 1) : 0;
-if (!$selectedId && $customers) { $selectedId = (int)$customers[0]['id']; }
 
 $selected = null;
 foreach ($customers as $c) {
@@ -727,18 +726,6 @@ foreach ($customers as $c) {
     $totalCredit += (float)$c['credit_total'];
 }
 $netBalance = $totalDebit - $totalCredit;
-$reportRows = cari_report_rows($uid, $reportFrom, $reportTo, $reportCustomerId ?: null);
-$reportDebit = 0.0; $reportCredit = 0.0;
-foreach ($reportRows as $r) {
-    $reportDebit += (float)$r['debit_total'];
-    $reportCredit += (float)$r['credit_total'];
-}
-$reportNet = $reportDebit - $reportCredit;
-$reportQuery = http_build_query(array_filter([
-    'from' => $reportFrom,
-    'to' => $reportTo,
-    'customer_id' => $reportCustomerId ?: null,
-], static fn($value) => $value !== null && $value !== ''));
 
 $pageTitle = 'Cariler';
 $pageHeader = 'Cari Hesaplar';
@@ -767,99 +754,8 @@ require __DIR__ . '/../inc/header.php';
 <div class="cf-page-head cf-cari-head">
     <h2>Cariler</h2>
     <div class="actions">
-        <a href="#cari-rapor" class="btn btn-ghost">Cari Rapor</a>
+        <a href="/reports.php" class="btn btn-ghost">Raporlar</a>
         <a href="/customers.php?new=1" class="btn btn-primary">+ Yeni Cari</a>
-    </div>
-</div>
-
-<div id="cari-rapor" class="cf-card cf-cari-report-card">
-    <div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap;">
-        <div>
-            <h3 style="margin-bottom:4px;">Cari Rapor</h3>
-            <div class="muted">Seçili tarih aralığına ve cariye göre borç, alacak ve net bakiye özeti.</div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <a class="btn btn-ghost" target="_blank" href="/customers.php?report=print<?= $reportQuery ? '&' . e($reportQuery) : '' ?>">PDF Rapor</a>
-            <a class="btn btn-outline" href="/customers.php?export=csv<?= $reportQuery ? '&' . e($reportQuery) : '' ?>">CSV İndir</a>
-        </div>
-    </div>
-    <form method="get" class="cf-form" style="margin-top:14px;">
-        <div>
-            <label>Cari Seçimi</label>
-            <select name="customer_id">
-                <option value="0">Tüm cariler</option>
-                <?php foreach ($customers as $c): ?>
-                    <option value="<?= (int)$c['id'] ?>" <?= $reportCustomerId === (int)$c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <div class="row">
-            <div>
-                <label>Başlangıç</label>
-                <input type="date" name="from" value="<?= e($reportFrom ?? '') ?>">
-            </div>
-            <div>
-                <label>Bitiş</label>
-                <input type="date" name="to" value="<?= e($reportTo ?? '') ?>">
-            </div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button class="btn btn-primary">Raporu Getir</button>
-            <a class="btn btn-ghost" href="/customers.php#cari-rapor">Sıfırla</a>
-        </div>
-    </form>
-    <form method="post" class="cf-form" data-once style="margin-top:14px;border-top:1px solid #eef0f4;padding-top:14px;">
-        <?= csrf_field() ?>
-        <input type="hidden" name="action" value="send_report_email">
-        <input type="hidden" name="from" value="<?= e($reportFrom ?? '') ?>">
-        <input type="hidden" name="to" value="<?= e($reportTo ?? '') ?>">
-        <input type="hidden" name="customer_id" value="<?= (int)$reportCustomerId ?>">
-        <div class="row">
-            <div>
-                <label>Rapor Mail Alıcısı</label>
-                <input type="email" name="report_email" value="<?= e($user['email'] ?? '') ?>" placeholder="rapor@alan.com" required>
-            </div>
-            <div style="display:flex;align-items:end;">
-                <button class="btn btn-outline" style="width:100%;">Cari Raporunu PDF Mail Gönder</button>
-            </div>
-        </div>
-    </form>
-    <div class="cf-grid cf-grid-3" style="margin:16px 0;">
-        <div class="cf-stat income">
-            <div class="label"><?= $reportCustomer ? 'Müşteri Borç' : 'Rapor Borç' ?></div>
-            <div class="value"><?= money($reportDebit) ?></div>
-            <div class="sub">Carilere işlenen borç</div>
-        </div>
-        <div class="cf-stat expense">
-            <div class="label"><?= $reportCustomer ? 'Müşteri Alacak' : 'Rapor Alacak' ?></div>
-            <div class="value"><?= money($reportCredit) ?></div>
-            <div class="sub">Ödemeler / alacak kayıtları</div>
-        </div>
-        <div class="cf-stat <?= $reportNet >= 0 ? 'gold' : 'expense' ?>">
-            <div class="label"><?= $reportCustomer ? 'Müşteri Net' : 'Rapor Net' ?></div>
-            <div class="value"><?= money(abs($reportNet)) ?></div>
-            <div class="sub"><?= $reportNet >= 0 ? 'Tahsil edilecek' : 'Ödenecek' ?></div>
-        </div>
-    </div>
-    <div class="cf-table-wrap">
-        <table class="cf-table cf-mobile-cards" style="box-shadow:none;border-radius:10px;">
-            <thead><tr><th>Cari</th><th>Tür</th><th class="amount">Borç</th><th class="amount">Alacak</th><th class="amount">Bakiye</th><th>Son Hareket</th></tr></thead>
-            <tbody>
-            <?php foreach ($reportRows as $r):
-                $bal = (float)$r['balance'];
-            ?>
-                <tr>
-                    <td data-label="Cari"><strong><?= e($r['name']) ?></strong><div style="font-size:12px;color:var(--cf-muted);"><?= e($r['phone'] ?: '') ?> <?= e($r['email'] ?: '') ?></div></td>
-                    <td data-label="Tür"><?= e($r['type']) ?></td>
-                    <td data-label="Borç" class="amount income"><?= money($r['debit_total']) ?></td>
-                    <td data-label="Alacak" class="amount expense"><?= money($r['credit_total']) ?></td>
-                    <td data-label="Bakiye" class="amount <?= $bal >= 0 ? 'income' : 'expense' ?>"><?= money(abs($bal)) ?> <?= $bal >= 0 ? 'Alacak' : 'Borç' ?></td>
-                    <td data-label="Son Hareket"><?= $r['last_tx_date'] ? tr_date($r['last_tx_date']) : '-' ?></td>
-                </tr>
-            <?php endforeach; ?>
-            <?php if (!$reportRows): ?><tr><td colspan="6" class="muted">Raporlanacak cari bulunamadı.</td></tr><?php endif; ?>
-            </tbody>
-        </table>
     </div>
 </div>
 
@@ -934,6 +830,13 @@ require __DIR__ . '/../inc/header.php';
         </div>
     </div>
 
+    <?php if (!$selected): ?>
+    <div class="cf-card cf-empty cf-cari-detail">
+        <div class="icon">□</div>
+        İşlem yapmak için soldan bir cari seçin. Borç, alacak, ekstre ve hareket alanları seçimden sonra açılır.
+    </div>
+    <?php endif; ?>
+
     <?php if ($selected):
         $balance = (float)$selected['balance'];
     ?>
@@ -959,26 +862,26 @@ require __DIR__ . '/../inc/header.php';
         </div>
 
         <div class="cf-card cf-cari-action-card">
-            <h3>Hızlı Cari Hareketi</h3>
+            <h3>Hızlı Borç / Alacak</h3>
             <form method="post" class="cf-form" data-once>
                 <?= csrf_field() ?>
                 <input type="hidden" name="action" value="add_movement">
                 <input type="hidden" name="customer_id" value="<?= (int)$selected['id'] ?>">
                 <div class="row">
                     <div>
-                        <label>Tarih</label>
-                        <input type="date" name="tx_date" value="<?= e(date('Y-m-d')) ?>" required>
-                    </div>
-                    <div>
                         <label>Tutar</label>
                         <input type="text" name="amount" data-money inputmode="decimal" required placeholder="0,00">
                     </div>
+                    <div>
+                        <label>Tarih</label>
+                        <input type="date" name="tx_date" value="<?= e(date('Y-m-d')) ?>" required>
+                    </div>
                 </div>
-                <div><label>İşlem Başlığı</label><input type="text" name="title" required maxlength="160" placeholder="Örn: Sefer ücreti, mazot, navlun, tahsilat"></div>
-                <div><label>Açıklama</label><textarea name="note" maxlength="500" rows="3" placeholder="Plaka, sefer no, güzergah, yükleme/boşaltma veya ödeme açıklaması"></textarea></div>
+                <div><label>Açıklama</label><input type="text" name="title" required maxlength="160" placeholder="Örn: Sefer ücreti, tahsilat, ödeme"></div>
+                <input type="hidden" name="note" value="">
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                    <button class="btn btn-primary" name="direction" value="debit">Borç Kaydet</button>
-                    <button class="btn btn-ghost" name="direction" value="credit">Alacak / Ödeme Kaydet</button>
+                    <button class="btn btn-primary" name="direction" value="debit">Borç Ekle</button>
+                    <button class="btn btn-success" name="direction" value="credit">Alacak / Ödeme Ekle</button>
                 </div>
             </form>
         </div>
