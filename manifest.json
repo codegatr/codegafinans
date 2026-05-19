@@ -2,8 +2,8 @@
     "name":  "CODEGA Finans",
     "slug":  "codegafinans",
     "domain":  "finans.codega.com.tr",
-    "version":  "1.0.16",
-    "released_at":  "2026-05-18",
+    "version":  "1.0.17",
+    "released_at":  "2026-05-19",
     "repo":  "codegatr/codegafinans",
     "branch":  "main",
     "author":  "CODEGA - Yunus Aksoy",
@@ -20,7 +20,7 @@
                     "Yönetici Paneli",
                     "Smart Update v5 (GitHub Release)",
                     "REST API (Android WebView)",
-                    "PWA DesteÄŸi"
+                    "PWA Desteği"
                 ],
     "total_modules":  12,
     "min_php":  "8.3.0",

@@ -9,8 +9,8 @@
 
 declare(strict_types=1);
 
-define('CF_VERSION',       '1.0.16');
-define('CF_RELEASED_AT',   '2026-05-18');
+define('CF_VERSION',       '1.0.17');
+define('CF_RELEASED_AT',   '2026-05-19');
 define('CF_REPO',          'codegatr/codegafinans');
 define('CF_BRANCH',        'main');
 define('CF_APP_NAME',      'CODEGA Finans');

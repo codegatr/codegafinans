@@ -11,7 +11,7 @@ require_once __DIR__ . '/../inc/mail.php';
 $user = auth_require_active_subscription();
 $uid = (int)$user['id'];
 
-function cari_report_rows(int $userId, ?string $from = null, ?string $to = null): array
+function cari_report_rows(int $userId, ?string $from = null, ?string $to = null, ?int $customerId = null): array
 {
     $dateWhere = ' WHERE user_id = :mu';
     $params = [':u' => $userId, ':mu' => $userId];
@@ -22,6 +22,16 @@ function cari_report_rows(int $userId, ?string $from = null, ?string $to = null)
     if ($to) {
         $dateWhere .= ' AND tx_date <= :to';
         $params[':to'] = $to;
+    }
+    if ($customerId) {
+        $dateWhere .= ' AND customer_id = :customer_filter';
+        $params[':customer_filter'] = $customerId;
+    }
+
+    $customerWhere = '';
+    if ($customerId) {
+        $customerWhere = ' AND c.id = :selected_customer';
+        $params[':selected_customer'] = $customerId;
     }
 
     return db_all(
@@ -40,10 +50,23 @@ function cari_report_rows(int $userId, ?string $from = null, ?string $to = null)
                   FROM ' . t('customer_movements') . $dateWhere . '
                  GROUP BY customer_id
            ) ms ON ms.customer_id = c.id
-          WHERE c.user_id = :u AND c.is_active = 1
+          WHERE c.user_id = :u AND c.is_active = 1' . $customerWhere . '
           ORDER BY c.name',
         $params
     );
+}
+
+function cari_user_name(array $user): string
+{
+    return trim((string)($user['name'] ?? '')) ?: CF_APP_NAME;
+}
+
+function cari_user_contact(array $user): string
+{
+    $parts = [];
+    if (!empty($user['phone'])) { $parts[] = (string)$user['phone']; }
+    if (!empty($user['email'])) { $parts[] = (string)$user['email']; }
+    return $parts ? implode(' / ', $parts) : '-';
 }
 
 function cari_redirect(?int $id = null): never
@@ -137,15 +160,17 @@ function cari_statement_html(array $customer, array $rows, ?string $from, ?strin
     [$debit, $credit, $balance] = cari_statement_totals($rows);
     $period = cari_doc_period($from, $to);
     $running = 0.0;
+    $senderName = cari_user_name($user);
+    $senderContact = cari_user_contact($user);
     ob_start();
     ?>
     <style><?= cari_document_styles() ?></style>
     <div>
         <div class="doc-head">
             <div>
-                <div class="brand"><?= e(CF_APP_NAME) ?></div>
+                <div class="brand"><?= e($senderName) ?></div>
                 <div class="doc-kicker">Cari mutabakat belgesi</div>
-                <div class="muted">Hareket bazlı cari hesap ekstresi</div>
+                <div class="muted"><?= e($senderContact) ?></div>
             </div>
             <div class="doc-title">
                 <h1>Cari Hesap Ekstresi</h1>
@@ -155,7 +180,7 @@ function cari_statement_html(array $customer, array $rows, ?string $from, ?strin
         <div class="info-grid">
             <div class="info"><small>Cari Ünvanı</small><strong><?= e($customer['name']) ?></strong></div>
             <div class="info"><small>E-posta / Telefon</small><strong><?= e(($customer['email'] ?: '-') . ' / ' . ($customer['phone'] ?: '-')) ?></strong></div>
-            <div class="info"><small>Hazırlayan</small><strong><?= e($user['name'] ?? CF_APP_NAME) ?></strong></div>
+            <div class="info"><small>Hazırlayan</small><strong><?= e($senderName) ?></strong><br><span class="muted"><?= e($senderContact) ?></span></div>
         </div>
         <div class="summary">
             <div class="sum debit"><small>Toplam Borç</small><strong><?= e(money($debit)) ?></strong></div>
@@ -193,7 +218,7 @@ function cari_statement_html(array $customer, array $rows, ?string $from, ?strin
     return (string)ob_get_clean();
 }
 
-function cari_report_html(array $rows, ?string $from, ?string $to, array $user): string
+function cari_report_html(array $rows, ?string $from, ?string $to, array $user, ?array $reportCustomer = null): string
 {
     $period = cari_doc_period($from, $to);
     $debit = 0.0; $credit = 0.0;
@@ -202,23 +227,27 @@ function cari_report_html(array $rows, ?string $from, ?string $to, array $user):
         $credit += (float)$row['credit_total'];
     }
     $net = $debit - $credit;
+    $senderName = cari_user_name($user);
+    $senderContact = cari_user_contact($user);
+    $title = $reportCustomer ? 'Müşteri Cari Raporu' : 'Cari Raporu';
     ob_start();
     ?>
     <style><?= cari_document_styles() ?></style>
     <div>
         <div class="doc-head">
             <div>
-                <div class="brand"><?= e(CF_APP_NAME) ?></div>
-                <div class="muted">Cari portföy raporu</div>
+                <div class="brand"><?= e($senderName) ?></div>
+                <div class="doc-kicker">Cari rapor belgesi</div>
+                <div class="muted"><?= e($senderContact) ?></div>
             </div>
             <div class="doc-title">
-                <h1>Cari Raporu</h1>
+                <h1><?= e($title) ?></h1>
                 <div class="muted"><?= e($period) ?></div>
             </div>
         </div>
         <div class="info-grid">
-            <div class="info"><small>Raporu Hazırlayan</small><strong><?= e($user['name'] ?? CF_APP_NAME) ?></strong></div>
-            <div class="info"><small>Cari Sayısı</small><strong><?= count($rows) ?></strong></div>
+            <div class="info"><small>Raporu Hazırlayan</small><strong><?= e($senderName) ?></strong><br><span class="muted"><?= e($senderContact) ?></span></div>
+            <div class="info"><small>Rapor Kapsamı</small><strong><?= e($reportCustomer['name'] ?? (count($rows) . ' cari')) ?></strong></div>
             <div class="info"><small>Oluşturma Zamanı</small><strong><?= e(date('d.m.Y H:i')) ?></strong></div>
         </div>
         <div class="summary">
@@ -344,12 +373,15 @@ function cari_pdf_document(string $title, array $lines): string
 function cari_statement_pdf(array $customer, array $rows, ?string $from, ?string $to, array $user): string
 {
     [$debit, $credit, $balance] = cari_statement_totals($rows);
+    $senderName = cari_user_name($user);
+    $senderContact = cari_user_contact($user);
     $lines = [
-        CF_APP_NAME . ' - Cari Hesap Ekstresi',
+        $senderName . ' - Cari Hesap Ekstresi',
+        'Gönderen iletişim: ' . $senderContact,
         'Dönem: ' . cari_doc_period($from, $to),
         'Cari: ' . (string)$customer['name'],
         'E-posta / Telefon: ' . (($customer['email'] ?: '-') . ' / ' . ($customer['phone'] ?: '-')),
-        'Hazırlayan: ' . (string)($user['name'] ?? CF_APP_NAME),
+        'Hazırlayan: ' . $senderName . ' / ' . $senderContact,
         'Toplam Borç: ' . money($debit) . ' | Toplam Alacak/Ödeme: ' . money($credit) . ' | Net: ' . money(abs($balance)) . ' ' . ($balance >= 0 ? 'Alacak' : 'Borç'),
         str_repeat('-', 92),
         'Tarih | İşlem / Açıklama | Borç | Alacak | Ara Bakiye',
@@ -375,7 +407,7 @@ function cari_statement_pdf(array $customer, array $rows, ?string $from, ?string
     return cari_pdf_document('Cari Hesap Ekstresi', $lines);
 }
 
-function cari_report_pdf(array $rows, ?string $from, ?string $to, array $user): string
+function cari_report_pdf(array $rows, ?string $from, ?string $to, array $user, ?array $reportCustomer = null): string
 {
     $debit = 0.0; $credit = 0.0;
     foreach ($rows as $row) {
@@ -383,11 +415,15 @@ function cari_report_pdf(array $rows, ?string $from, ?string $to, array $user): 
         $credit += (float)$row['credit_total'];
     }
     $net = $debit - $credit;
+    $senderName = cari_user_name($user);
+    $senderContact = cari_user_contact($user);
+    $title = $reportCustomer ? 'Müşteri Cari Raporu' : 'Cari Raporu';
     $lines = [
-        CF_APP_NAME . ' - Cari Raporu',
+        $senderName . ' - ' . $title,
+        'Gönderen iletişim: ' . $senderContact,
         'Dönem: ' . cari_doc_period($from, $to),
-        'Hazırlayan: ' . (string)($user['name'] ?? CF_APP_NAME),
-        'Cari Sayısı: ' . count($rows),
+        'Hazırlayan: ' . $senderName . ' / ' . $senderContact,
+        'Rapor Kapsamı: ' . (string)($reportCustomer['name'] ?? (count($rows) . ' cari')),
         'Toplam Borç: ' . money($debit) . ' | Toplam Alacak/Ödeme: ' . money($credit) . ' | Net Portföy: ' . money(abs($net)) . ' ' . ($net >= 0 ? 'Alacak' : 'Borç'),
         str_repeat('-', 92),
         'Cari | İletişim | Borç | Alacak | Net Bakiye | Son Hareket',
@@ -403,17 +439,19 @@ function cari_report_pdf(array $rows, ?string $from, ?string $to, array $user): 
     if (!$rows) {
         $lines[] = 'Raporlanacak cari bulunamadı.';
     }
-    return cari_pdf_document('Cari Raporu', $lines);
+    return cari_pdf_document($title, $lines);
 }
 
 $reportFrom = isset($_GET['from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$_GET['from']) ? (string)$_GET['from'] : null;
 $reportTo = isset($_GET['to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$_GET['to']) ? (string)$_GET['to'] : null;
+$reportCustomerId = intval_safe($_GET['customer_id'] ?? 0, 0);
+$reportCustomer = $reportCustomerId ? cari_customer_or_fail($uid, $reportCustomerId) : null;
 $statementFrom = isset($_GET['statement_from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$_GET['statement_from']) ? (string)$_GET['statement_from'] : null;
 $statementTo = isset($_GET['statement_to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$_GET['statement_to']) ? (string)$_GET['statement_to'] : null;
 if ($reportFrom && $reportTo && $reportFrom > $reportTo) { [$reportFrom, $reportTo] = [$reportTo, $reportFrom]; }
 if ($statementFrom && $statementTo && $statementFrom > $statementTo) { [$statementFrom, $statementTo] = [$statementTo, $statementFrom]; }
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {
-    $rows = cari_report_rows($uid, $reportFrom, $reportTo);
+    $rows = cari_report_rows($uid, $reportFrom, $reportTo, $reportCustomerId ?: null);
     while (ob_get_level() > 0) { ob_end_clean(); }
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="cari-rapor-' . date('Ymd-His') . '.csv"');
@@ -447,9 +485,9 @@ if (isset($_GET['statement']) && $_GET['statement'] === 'print') {
 }
 
 if (isset($_GET['report']) && $_GET['report'] === 'print') {
-    $rows = cari_report_rows($uid, $reportFrom, $reportTo);
-    $html = cari_report_html($rows, $reportFrom, $reportTo, $user);
-    cari_document_shell('Cari Raporu', $html, '/customers.php#cari-rapor');
+    $rows = cari_report_rows($uid, $reportFrom, $reportTo, $reportCustomerId ?: null);
+    $html = cari_report_html($rows, $reportFrom, $reportTo, $user, $reportCustomer);
+    cari_document_shell($reportCustomer ? 'Müşteri Cari Raporu' : 'Cari Raporu', $html, '/customers.php#cari-rapor');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -604,6 +642,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'send_report_email') {
         $from = isset($_POST['from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$_POST['from']) ? (string)$_POST['from'] : null;
         $to = isset($_POST['to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$_POST['to']) ? (string)$_POST['to'] : null;
+        $customerId = intval_safe($_POST['customer_id'] ?? 0, 0);
+        $customer = $customerId ? cari_customer_or_fail($uid, $customerId) : null;
         if ($from && $to && $from > $to) { [$from, $to] = [$to, $from]; }
         $email = s($_POST['report_email'] ?? ($user['email'] ?? ''), 160);
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -611,12 +651,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirect('/customers.php#cari-rapor');
         }
         try {
-            $rows = cari_report_rows($uid, $from, $to);
-            $html = cari_report_html($rows, $from, $to, $user);
-            $pdf = cari_report_pdf($rows, $from, $to, $user);
+            $rows = cari_report_rows($uid, $from, $to, $customerId ?: null);
+            $html = cari_report_html($rows, $from, $to, $user, $customer);
+            $pdf = cari_report_pdf($rows, $from, $to, $user, $customer);
             cf_send_mail(
                 $email,
-                'Cari Raporu - ' . cari_doc_period($from, $to),
+                ($customer ? 'Müşteri Cari Raporu - ' . $customer['name'] : 'Cari Raporu') . ' - ' . cari_doc_period($from, $to),
                 $html,
                 'Cari raporunuz PDF olarak ektedir. Detaylar HTML mesaj içeriğinde de yer alır.',
                 [[
@@ -687,13 +727,18 @@ foreach ($customers as $c) {
     $totalCredit += (float)$c['credit_total'];
 }
 $netBalance = $totalDebit - $totalCredit;
-$reportRows = cari_report_rows($uid, $reportFrom, $reportTo);
+$reportRows = cari_report_rows($uid, $reportFrom, $reportTo, $reportCustomerId ?: null);
 $reportDebit = 0.0; $reportCredit = 0.0;
 foreach ($reportRows as $r) {
     $reportDebit += (float)$r['debit_total'];
     $reportCredit += (float)$r['credit_total'];
 }
 $reportNet = $reportDebit - $reportCredit;
+$reportQuery = http_build_query(array_filter([
+    'from' => $reportFrom,
+    'to' => $reportTo,
+    'customer_id' => $reportCustomerId ?: null,
+], static fn($value) => $value !== null && $value !== ''));
 
 $pageTitle = 'Cariler';
 $pageHeader = 'Cari Hesaplar';
@@ -731,14 +776,23 @@ require __DIR__ . '/../inc/header.php';
     <div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap;">
         <div>
             <h3 style="margin-bottom:4px;">Cari Rapor</h3>
-            <div class="muted">Seçili tarih aralığına göre borç, alacak ve net bakiye özeti.</div>
+            <div class="muted">Seçili tarih aralığına ve cariye göre borç, alacak ve net bakiye özeti.</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <a class="btn btn-ghost" target="_blank" href="/customers.php?report=print<?= $reportFrom ? '&from=' . e($reportFrom) : '' ?><?= $reportTo ? '&to=' . e($reportTo) : '' ?>">PDF Rapor</a>
-            <a class="btn btn-outline" href="/customers.php?export=csv<?= $reportFrom ? '&from=' . e($reportFrom) : '' ?><?= $reportTo ? '&to=' . e($reportTo) : '' ?>">CSV İndir</a>
+            <a class="btn btn-ghost" target="_blank" href="/customers.php?report=print<?= $reportQuery ? '&' . e($reportQuery) : '' ?>">PDF Rapor</a>
+            <a class="btn btn-outline" href="/customers.php?export=csv<?= $reportQuery ? '&' . e($reportQuery) : '' ?>">CSV İndir</a>
         </div>
     </div>
     <form method="get" class="cf-form" style="margin-top:14px;">
+        <div>
+            <label>Cari Seçimi</label>
+            <select name="customer_id">
+                <option value="0">Tüm cariler</option>
+                <?php foreach ($customers as $c): ?>
+                    <option value="<?= (int)$c['id'] ?>" <?= $reportCustomerId === (int)$c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
         <div class="row">
             <div>
                 <label>Başlangıç</label>
@@ -759,6 +813,7 @@ require __DIR__ . '/../inc/header.php';
         <input type="hidden" name="action" value="send_report_email">
         <input type="hidden" name="from" value="<?= e($reportFrom ?? '') ?>">
         <input type="hidden" name="to" value="<?= e($reportTo ?? '') ?>">
+        <input type="hidden" name="customer_id" value="<?= (int)$reportCustomerId ?>">
         <div class="row">
             <div>
                 <label>Rapor Mail Alıcısı</label>
@@ -771,17 +826,17 @@ require __DIR__ . '/../inc/header.php';
     </form>
     <div class="cf-grid cf-grid-3" style="margin:16px 0;">
         <div class="cf-stat income">
-            <div class="label">Rapor Borç</div>
+            <div class="label"><?= $reportCustomer ? 'Müşteri Borç' : 'Rapor Borç' ?></div>
             <div class="value"><?= money($reportDebit) ?></div>
             <div class="sub">Carilere işlenen borç</div>
         </div>
         <div class="cf-stat expense">
-            <div class="label">Rapor Alacak</div>
+            <div class="label"><?= $reportCustomer ? 'Müşteri Alacak' : 'Rapor Alacak' ?></div>
             <div class="value"><?= money($reportCredit) ?></div>
             <div class="sub">Ödemeler / alacak kayıtları</div>
         </div>
         <div class="cf-stat <?= $reportNet >= 0 ? 'gold' : 'expense' ?>">
-            <div class="label">Rapor Net</div>
+            <div class="label"><?= $reportCustomer ? 'Müşteri Net' : 'Rapor Net' ?></div>
             <div class="value"><?= money(abs($reportNet)) ?></div>
             <div class="sub"><?= $reportNet >= 0 ? 'Tahsil edilecek' : 'Ödenecek' ?></div>
         </div>

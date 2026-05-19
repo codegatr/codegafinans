@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.17 - 2026-05-19
+
+- Cari ekstre ve cari rapor belgelerinde üst marka alanı işlemi yapan kullanıcının adı ve iletişim bilgisiyle değiştirildi.
+- Mail HTML içeriği ve PDF eki aynı gönderen bilgisiyle müşteri tarafından okunabilir hale getirildi.
+- Cari Rapor ekranına müşteri seçimi eklendi; tüm cariler veya tek müşteri bazlı cari hesap özeti alınabilir, PDF/CSV/mail çıktıları aynı filtreyi kullanır.
+- Dashboard Türkçe görünür metinleri UTF-8 açısından yeniden kontrol edildi.
+
 ## 1.0.16 - 2026-05-18
 
 - Cari Hesap Ekstresi mail gönderimi gerçek PDF eki gönderecek şekilde düzeltildi.
