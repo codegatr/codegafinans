@@ -898,8 +898,8 @@ require __DIR__ . '/../inc/header.php';
         <?= $customerSearch !== '' ? 'Arama sonucu bulunamadı. Farklı bir ad, telefon veya e-posta deneyin.' : 'Henüz cari kartı yok. İlk müşteriyi veya tedarikçiyi ekleyin.' ?>
         <form method="get" action="/customers.php" class="cf-cari-search cf-cari-search-empty">
             <input type="search" name="q" value="<?= e($customerSearch) ?>" maxlength="120" placeholder="Cari adı, telefon, e-posta veya vergi no ara">
-            <button class="btn btn-primary btn-sm">Ara</button>
-            <?php if ($customerSearch !== ''): ?><a class="btn btn-ghost btn-sm" href="/customers.php">Temizle</a><?php endif; ?>
+            <button class="btn btn-primary btn-sm" title="Ara" aria-label="Ara">Ara</button>
+            <?php if ($customerSearch !== ''): ?><a class="btn btn-ghost btn-sm" href="/customers.php" title="Temizle" aria-label="Temizle">Temizle</a><?php endif; ?>
         </form>
     </div>
 <?php else: ?>
@@ -934,9 +934,8 @@ require __DIR__ . '/../inc/header.php';
     </div>
 
     <?php if (!$selected): ?>
-    <div class="cf-card cf-empty cf-cari-detail">
-        <div class="icon">□</div>
-        İşlem yapmak için soldan bir cari seçin. Borç, alacak, ekstre ve hareket alanları seçimden sonra açılır.
+    <div class="cf-card cf-empty cf-cari-detail cf-cari-pick-note">
+        Lütfen bir cari seçin.
     </div>
     <?php endif; ?>
 

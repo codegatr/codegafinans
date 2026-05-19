@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.23 - 2026-05-19
+
+- Cari Hesaplar ekranındaki arama alanı web ve mobilde daha kompakt, nazik bir filtre satırı olacak şekilde düzenlendi.
+- Cari özet kartları özellikle mobilde daha küçük ve sakin ölçülere çekildi.
+- Cari seçilmediğinde görünen uzun boş durum uyarısı kısa “Lütfen bir cari seçin.” mesajıyla değiştirildi.
+
 ## 1.0.22 - 2026-05-19
 
 - Cari ekstre ve cari rapor PDF çıktıları düz metin görünümünden çıkarıldı; başlık, bilgi kutuları, özet kartları ve hizalı tablo düzeniyle profesyonel belge tasarımına alındı.
