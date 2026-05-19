@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.19 - 2026-05-19
+
+- Cari Hesaplar ekranına ad, telefon, e-posta ve vergi no üzerinden çalışan arama alanı eklendi.
+- Cari ekstre ve cari rapor mail içerikleri Gmail gibi istemcilerde bozulmaması için inline stilli profesyonel HTML şablonuna taşındı.
+- PDF ekstre/rapor üretimindeki bozuk UTF-16 çıktısı kaldırıldı; okunabilir, temiz PDF üretimi eklendi.
+
 ## 1.0.18 - 2026-05-19
 
 - Cari Hesaplar ekranı sadeleştirildi; rapor alanı ayrı `Raporlar` sayfasına taşındı.
