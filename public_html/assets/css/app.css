@@ -316,6 +316,51 @@ a:hover { color: var(--cf-primary-2); }
     }
 }
 
+@media (max-width: 560px) {
+    .cf-auth-login {
+        min-height: 100svh;
+        padding: 10px;
+        align-items: flex-start;
+    }
+    .cf-auth-shell {
+        gap: 10px;
+    }
+    .cf-auth-panel {
+        padding: 6px 2px 0;
+        gap: 10px;
+    }
+    .cf-auth-home-brand {
+        justify-content: center;
+        margin-bottom: 2px;
+    }
+    .cf-auth-copy {
+        display: none;
+    }
+    .cf-auth-login-card {
+        align-self: stretch;
+        padding: 20px 16px;
+        border-radius: 16px;
+        box-shadow: 0 18px 44px rgba(0,0,0,.18);
+    }
+    .cf-auth-login-card h1 {
+        font-size: 24px;
+        line-height: 1.18;
+    }
+    .cf-auth-login-card p {
+        margin-bottom: 16px;
+        font-size: 13px;
+        line-height: 1.45;
+    }
+    .cf-auth-login-card input[type=email],
+    .cf-auth-login-card input[type=password] {
+        min-height: 48px;
+        font-size: 16px;
+    }
+    .cf-auth-login-card .btn-primary {
+        min-height: 48px;
+    }
+}
+
 /* ------------ App shell (yan menü + üst bar) ------------ */
 .cf-app {
     display: grid;
@@ -642,6 +687,29 @@ a:hover { color: var(--cf-primary-2); }
 }
 .cf-card .muted { color: var(--cf-text-soft); font-size: 13px; }
 
+.cf-mini-metric {
+    min-width: 0;
+    display: grid;
+    gap: 6px;
+    padding: 14px;
+    border: 1px solid #eef0f4;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+.cf-mini-metric span {
+    color: var(--cf-text-soft);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+.cf-mini-metric strong {
+    color: var(--cf-text);
+    font-size: 22px;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
 .cf-dashboard {
     display: grid;
     gap: 18px;
@@ -729,6 +797,12 @@ a:hover { color: var(--cf-primary-2); }
         font-size: 12px;
         text-transform: uppercase;
         letter-spacing: .4px;
+    }
+    .cf-mini-metric {
+        padding: 12px;
+    }
+    .cf-mini-metric strong {
+        font-size: 18px;
     }
 }
 

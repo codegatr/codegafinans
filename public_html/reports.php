@@ -414,7 +414,7 @@ function cari_pdf_summary_box(float $x, float $y, float $w, string $label, strin
 {
     $c = cari_pdf_rect($x, $y, $w, 64, $fill);
     $c .= cari_pdf_label($x + 12, $y + 42, $label, 'F2', 10, '1 1 1');
-    $c .= cari_pdf_label($x + 12, $y + 16, $value, 'F2', 18, '1 1 1');
+    $c .= cari_pdf_label($x + 12, $y + 18, cari_pdf_fit($value, 17), 'F2', 12, '1 1 1');
     return $c;
 }
 
@@ -448,9 +448,9 @@ function cari_statement_pdf(array $customer, array $rows, ?string $from, ?string
         $c .= cari_pdf_label(60, $tableY, 'Tarih', 'F2', 8, '0.20 0.27 0.36');
         $c .= cari_pdf_label(118, $tableY, 'Islem / Aciklama', 'F2', 8, '0.20 0.27 0.36');
         $c .= cari_pdf_label(292, $tableY, 'Vade', 'F2', 8, '0.20 0.27 0.36');
-        $c .= cari_pdf_label(350, $tableY, 'Borc', 'F2', 8, '0.20 0.27 0.36');
-        $c .= cari_pdf_label(414, $tableY, 'Alacak', 'F2', 8, '0.20 0.27 0.36');
-        $c .= cari_pdf_label(478, $tableY, 'Ara Bakiye', 'F2', 8, '0.20 0.27 0.36');
+        $c .= cari_pdf_label(346, $tableY, 'Borc', 'F2', 8, '0.20 0.27 0.36');
+        $c .= cari_pdf_label(406, $tableY, 'Alacak', 'F2', 8, '0.20 0.27 0.36');
+        $c .= cari_pdf_label(466, $tableY, 'Ara Bakiye', 'F2', 8, '0.20 0.27 0.36');
         $y = $tableY - 28;
         foreach ($chunk as $row) {
             $amount = (float)$row['amount'];
@@ -460,9 +460,9 @@ function cari_statement_pdf(array $customer, array $rows, ?string $from, ?string
             $c .= cari_pdf_label(118, $y, cari_pdf_fit((string)$row['title'], 31), 'F2', 8, '0.02 0.08 0.18');
             if (!empty($row['note'])) { $c .= cari_pdf_label(118, $y - 11, cari_pdf_fit((string)$row['note'], 36), 'F1', 7, '0.39 0.45 0.55'); }
             $c .= cari_pdf_label(292, $y, !empty($row['due_date']) ? tr_date($row['due_date']) : '-', 'F1', 8, '0.02 0.08 0.18');
-            $c .= cari_pdf_label(350, $y, $row['direction'] === 'debit' ? cari_pdf_money($amount) : '-', 'F1', 8, '0.02 0.08 0.18');
-            $c .= cari_pdf_label(414, $y, $row['direction'] === 'credit' ? cari_pdf_money($amount) : '-', 'F1', 8, '0.02 0.08 0.18');
-            $c .= cari_pdf_label(478, $y, cari_pdf_money(abs($running)) . ' ' . ($running >= 0 ? 'Alacak' : 'Borc'), 'F1', 8, '0.02 0.08 0.18');
+            $c .= cari_pdf_label(346, $y, $row['direction'] === 'debit' ? cari_pdf_fit(cari_pdf_money($amount), 11) : '-', 'F1', 8, '0.02 0.08 0.18');
+            $c .= cari_pdf_label(406, $y, $row['direction'] === 'credit' ? cari_pdf_fit(cari_pdf_money($amount), 11) : '-', 'F1', 8, '0.02 0.08 0.18');
+            $c .= cari_pdf_label(466, $y, cari_pdf_fit(cari_pdf_money(abs($running)) . ' ' . ($running >= 0 ? 'Alacak' : 'Borc'), 15), 'F1', 8, '0.02 0.08 0.18');
             $y -= 30;
         }
         if (!$chunk) { $c .= cari_pdf_label(60, $y, 'Bu donem icin hareket yok.', 'F1', 10, '0.39 0.45 0.55'); }
@@ -499,21 +499,21 @@ function cari_report_pdf(array $rows, ?string $from, ?string $to, array $user, ?
         } else { $tableY = 674; }
         $c .= cari_pdf_rect(54, $tableY - 8, 487, 24, '0.95 0.97 0.99');
         $c .= cari_pdf_label(60, $tableY, 'Cari', 'F2', 8, '0.20 0.27 0.36');
-        $c .= cari_pdf_label(206, $tableY, 'Iletisim', 'F2', 8, '0.20 0.27 0.36');
-        $c .= cari_pdf_label(318, $tableY, 'Borc', 'F2', 8, '0.20 0.27 0.36');
-        $c .= cari_pdf_label(382, $tableY, 'Alacak', 'F2', 8, '0.20 0.27 0.36');
-        $c .= cari_pdf_label(446, $tableY, 'Net Bakiye', 'F2', 8, '0.20 0.27 0.36');
-        $c .= cari_pdf_label(510, $tableY, 'Son', 'F2', 8, '0.20 0.27 0.36');
+        $c .= cari_pdf_label(198, $tableY, 'Iletisim', 'F2', 8, '0.20 0.27 0.36');
+        $c .= cari_pdf_label(304, $tableY, 'Borc', 'F2', 8, '0.20 0.27 0.36');
+        $c .= cari_pdf_label(362, $tableY, 'Alacak', 'F2', 8, '0.20 0.27 0.36');
+        $c .= cari_pdf_label(420, $tableY, 'Net Bakiye', 'F2', 8, '0.20 0.27 0.36');
+        $c .= cari_pdf_label(512, $tableY, 'Son', 'F2', 8, '0.20 0.27 0.36');
         $y = $tableY - 28;
         foreach ($chunk as $row) {
             $balance = (float)$row['balance'];
             $c .= cari_pdf_line(54, $y + 16, 541, $y + 16, '0.89 0.92 0.96', 0.5);
-            $c .= cari_pdf_label(60, $y, cari_pdf_fit((string)$row['name'], 24), 'F2', 8, '0.02 0.08 0.18');
-            $c .= cari_pdf_label(206, $y, cari_pdf_fit(($row['phone'] ?: '-') . ' / ' . ($row['email'] ?: '-'), 20), 'F1', 8, '0.02 0.08 0.18');
-            $c .= cari_pdf_label(318, $y, cari_pdf_money($row['debit_total']), 'F1', 8, '0.02 0.08 0.18');
-            $c .= cari_pdf_label(382, $y, cari_pdf_money($row['credit_total']), 'F1', 8, '0.02 0.08 0.18');
-            $c .= cari_pdf_label(446, $y, cari_pdf_money(abs($balance)) . ' ' . ($balance >= 0 ? 'Alacak' : 'Borc'), 'F1', 8, '0.02 0.08 0.18');
-            $c .= cari_pdf_label(510, $y, $row['last_tx_date'] ? tr_date($row['last_tx_date']) : '-', 'F1', 8, '0.02 0.08 0.18');
+            $c .= cari_pdf_label(60, $y, cari_pdf_fit((string)$row['name'], 22), 'F2', 8, '0.02 0.08 0.18');
+            $c .= cari_pdf_label(198, $y, cari_pdf_fit(($row['phone'] ?: '-') . ' / ' . ($row['email'] ?: '-'), 18), 'F1', 8, '0.02 0.08 0.18');
+            $c .= cari_pdf_label(304, $y, cari_pdf_fit(cari_pdf_money($row['debit_total']), 11), 'F1', 8, '0.02 0.08 0.18');
+            $c .= cari_pdf_label(362, $y, cari_pdf_fit(cari_pdf_money($row['credit_total']), 11), 'F1', 8, '0.02 0.08 0.18');
+            $c .= cari_pdf_label(420, $y, cari_pdf_fit(cari_pdf_money(abs($balance)) . ' ' . ($balance >= 0 ? 'Alacak' : 'Borc'), 13), 'F1', 8, '0.02 0.08 0.18');
+            $c .= cari_pdf_label(512, $y, $row['last_tx_date'] ? cari_pdf_fit(tr_date($row['last_tx_date']), 11) : '-', 'F1', 8, '0.02 0.08 0.18');
             $y -= 28;
         }
         if (!$chunk) { $c .= cari_pdf_label(60, $y, 'Raporlanacak cari bulunamadi.', 'F1', 10, '0.39 0.45 0.55'); }

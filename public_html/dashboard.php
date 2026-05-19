@@ -53,32 +53,44 @@ require __DIR__ . '/../inc/header.php';
 <!-- KPI'lar -->
 <div class="cf-grid cf-grid-4 cf-dashboard-kpis">
     <div class="cf-stat income">
-        <div class="label">Bu Ay Gelir</div>
+        <div class="label">Gelir + Cari Alacak</div>
         <div class="value"><?= money($summary['income']) ?></div>
-        <div class="sub"><?= tr_month($summary['month']) ?></div>
+        <div class="sub"><?= tr_month($summary['month']) ?> &middot; Cari <?= money($summary['cariMonthDebit']) ?></div>
     </div>
     <div class="cf-stat expense">
-        <div class="label">Bu Ay Gider</div>
+        <div class="label">Gider + Cari Ödeme</div>
         <div class="value"><?= money($summary['expense']) ?></div>
-        <div class="sub">
-            <?php if ($summary['budget'] > 0): ?>
-                Bütçenin %<?= (int)$summary['usage'] ?>'i kullanıldı
-            <?php else: ?>
-                Bütçe tanımlı değil
-            <?php endif; ?>
-        </div>
+        <div class="sub">Cari ödeme: <?= money($summary['cariMonthCredit']) ?></div>
     </div>
     <div class="cf-stat balance">
-        <div class="label">Net Bakiye</div>
+        <div class="label">Net Durum</div>
         <div class="value"><?= money($summary['balance']) ?></div>
-        <div class="sub">
-        <?= $summary['balance'] >= 0 ? 'Pozitif' : 'Negatif' ?> nakit akışı
-        </div>
+        <div class="sub"><?= $summary['balance'] >= 0 ? 'Pozitif' : 'Negatif' ?> aylık sonuç</div>
     </div>
     <div class="cf-stat gold">
-        <div class="label">Birikim Toplamı</div>
-        <div class="value"><?= money($summary['saved']) ?></div>
-        <div class="sub">Aktif tasarruf hedefleri</div>
+        <div class="label">Cari Net</div>
+        <div class="value"><?= money(abs($summary['cariBalance'])) ?></div>
+        <div class="sub"><?= $summary['cariBalance'] >= 0 ? 'Tahsil edilecek' : 'Ödenecek' ?> bakiye</div>
+    </div>
+</div>
+
+<div class="cf-grid cf-grid-2 cf-dashboard-grid cf-cari-position-row">
+    <div class="cf-card">
+        <div class="cf-card-head">
+            <h3 style="margin:0;">Borç / Alacak Durumu</h3>
+            <a href="/customers.php" style="font-size:13px;">Cariler &rarr;</a>
+        </div>
+        <div class="cf-grid cf-grid-2">
+            <div class="cf-mini-metric"><span>Alacağım</span><strong><?= money($summary['cariReceivable']) ?></strong></div>
+            <div class="cf-mini-metric"><span>Vereceğim</span><strong><?= money($summary['cariPayable']) ?></strong></div>
+        </div>
+    </div>
+    <div class="cf-card">
+        <div class="cf-card-head">
+            <h3 style="margin:0;">Birikim Toplamı</h3>
+            <a href="/goals.php" style="font-size:13px;">Hedefler &rarr;</a>
+        </div>
+        <div class="cf-mini-metric"><span>Aktif tasarruf hedefleri</span><strong><?= money($summary['saved']) ?></strong></div>
     </div>
 </div>
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.24 - 2026-05-19
+
+- Cari hareketlerine düzenleme akışı eklendi; hatalı borç/alacak kayıtları tutar, tarih, vade, tür ve açıklama alanlarıyla düzeltilebilir.
+- Yönetim paneline Cron Ayarları sayfası eklendi; günlük cron komutu görülebilir ve cari vade hatırlatmaları manuel çalıştırılabilir.
+- Dashboard KPI hesapları cari borç/alacak hareketlerini de içerecek şekilde güncellendi; alacağım ve vereceğim toplamları görünür hale getirildi.
+- Login ekranı dar mobil ekranlarda daha kompakt ve taşmasız çalışacak şekilde iyileştirildi.
+- Cari ekstre ve cari rapor PDF çıktılarında kesilen özet ve tablo metinleri daha güvenli hizalanacak şekilde düzeltildi.
+
 ## 1.0.23 - 2026-05-19
 
 - Cari Hesaplar ekranındaki arama alanı web ve mobilde daha kompakt, nazik bir filtre satırı olacak şekilde düzenlendi.

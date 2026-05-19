@@ -17,12 +17,37 @@ function fin_monthly_summary(int $userId, ?string $month = null): array
           WHERE user_id = :u AND type = "income" AND DATE_FORMAT(tx_date,"%Y-%m") = :m',
         [':u' => $userId, ':m' => $month]
     )['s'] ?? 0);
+    $cashIncome = $income;
 
     $expense = (float) (db_one(
         'SELECT COALESCE(SUM(amount),0) s FROM ' . t('transactions') . '
           WHERE user_id = :u AND type = "expense" AND DATE_FORMAT(tx_date,"%Y-%m") = :m',
         [':u' => $userId, ':m' => $month]
     )['s'] ?? 0);
+    $cashExpense = $expense;
+
+    $cariMonth = db_one(
+        'SELECT
+            COALESCE(SUM(IF(direction="debit", amount, 0)),0) AS debit_total,
+            COALESCE(SUM(IF(direction="credit", amount, 0)),0) AS credit_total
+           FROM ' . t('customer_movements') . '
+          WHERE user_id = :u AND DATE_FORMAT(tx_date,"%Y-%m") = :m',
+        [':u' => $userId, ':m' => $month]
+    ) ?: ['debit_total' => 0, 'credit_total' => 0];
+    $cariMonthDebit = (float)$cariMonth['debit_total'];
+    $cariMonthCredit = (float)$cariMonth['credit_total'];
+    $income += $cariMonthDebit;
+    $expense += $cariMonthCredit;
+
+    $cariAll = db_one(
+        'SELECT COALESCE(SUM(IF(direction="debit", amount, -amount)),0) AS balance
+           FROM ' . t('customer_movements') . '
+          WHERE user_id = :u',
+        [':u' => $userId]
+    ) ?: ['balance' => 0];
+    $cariBalance = (float)$cariAll['balance'];
+    $cariReceivable = max(0, $cariBalance);
+    $cariPayable = max(0, -$cariBalance);
 
     $budget = (float) (db_one(
         'SELECT COALESCE(SUM(limit_amount),0) s FROM ' . t('budgets') . '
@@ -44,7 +69,23 @@ function fin_monthly_summary(int $userId, ?string $month = null): array
     $balance = $income - $expense;
     $usage = $budget > 0 ? min(100, round(($expense / $budget) * 100)) : 0;
 
-    return compact('month','income','expense','budget','saved','debt','balance','usage');
+    return compact(
+        'month',
+        'income',
+        'expense',
+        'cashIncome',
+        'cashExpense',
+        'cariMonthDebit',
+        'cariMonthCredit',
+        'cariBalance',
+        'cariReceivable',
+        'cariPayable',
+        'budget',
+        'saved',
+        'debt',
+        'balance',
+        'usage'
+    );
 }
 
 function fin_recent_transactions(int $userId, int $limit = 8): array
@@ -96,15 +137,27 @@ function fin_categories_for(int $userId, string $type = 'both'): array
 function fin_monthly_series(int $userId, int $months = 6): array
 {
     $rows = db_all(
-        'SELECT DATE_FORMAT(tx_date,"%Y-%m") AS ym,
-                SUM(IF(type="income", amount, 0))  AS income,
-                SUM(IF(type="expense", amount, 0)) AS expense
-           FROM ' . t('transactions') . '
-          WHERE user_id = :u
-            AND tx_date >= (CURDATE() - INTERVAL :m MONTH)
+        'SELECT ym, SUM(income) AS income, SUM(expense) AS expense
+           FROM (
+                SELECT DATE_FORMAT(tx_date,"%Y-%m") AS ym,
+                       SUM(IF(type="income", amount, 0))  AS income,
+                       SUM(IF(type="expense", amount, 0)) AS expense
+                  FROM ' . t('transactions') . '
+                 WHERE user_id = :ut
+                   AND tx_date >= (CURDATE() - INTERVAL :mt MONTH)
+                 GROUP BY ym
+                UNION ALL
+                SELECT DATE_FORMAT(tx_date,"%Y-%m") AS ym,
+                       SUM(IF(direction="debit", amount, 0))  AS income,
+                       SUM(IF(direction="credit", amount, 0)) AS expense
+                  FROM ' . t('customer_movements') . '
+                 WHERE user_id = :uc
+                   AND tx_date >= (CURDATE() - INTERVAL :mc MONTH)
+                 GROUP BY ym
+           ) monthly_flow
           GROUP BY ym
           ORDER BY ym',
-        [':u' => $userId, ':m' => $months]
+        [':ut' => $userId, ':mt' => $months, ':uc' => $userId, ':mc' => $months]
     );
     return $rows;
 }
