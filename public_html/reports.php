@@ -226,6 +226,7 @@ function cari_statement_html(array $customer, array $rows, ?string $from, ?strin
                             <tr>
                                 <th align="left" style="padding:11px 10px;background:#f1f5f9;color:#334155;border-bottom:1px solid #e2e8f0;">Tarih</th>
                                 <th align="left" style="padding:11px 10px;background:#f1f5f9;color:#334155;border-bottom:1px solid #e2e8f0;">İşlem / Açıklama</th>
+                                <th align="left" style="padding:11px 10px;background:#f1f5f9;color:#334155;border-bottom:1px solid #e2e8f0;">Vade</th>
                                 <th align="right" style="padding:11px 10px;background:#f1f5f9;color:#334155;border-bottom:1px solid #e2e8f0;">Borç</th>
                                 <th align="right" style="padding:11px 10px;background:#f1f5f9;color:#334155;border-bottom:1px solid #e2e8f0;">Alacak</th>
                                 <th align="right" style="padding:11px 10px;background:#f1f5f9;color:#334155;border-bottom:1px solid #e2e8f0;">Ara Bakiye</th>
@@ -239,13 +240,14 @@ function cari_statement_html(array $customer, array $rows, ?string $from, ?strin
                             <tr>
                                 <td style="padding:12px 10px;border-bottom:1px solid #e2e8f0;color:#0f172a;white-space:nowrap;"><?= e(tr_date($row['tx_date'])) ?></td>
                                 <td style="padding:12px 10px;border-bottom:1px solid #e2e8f0;color:#0f172a;"><strong><?= e($row['title']) ?></strong><?php if ($row['note']): ?><br><span style="color:#64748b;"><?= e($row['note']) ?></span><?php endif; ?></td>
+                                <td style="padding:12px 10px;border-bottom:1px solid #e2e8f0;color:#0f172a;white-space:nowrap;"><?= !empty($row['due_date']) ? e(tr_date($row['due_date'])) : '-' ?></td>
                                 <td align="right" style="padding:12px 10px;border-bottom:1px solid #e2e8f0;color:#0f172a;white-space:nowrap;"><?= $row['direction'] === 'debit' ? e(money($amount)) : '-' ?></td>
                                 <td align="right" style="padding:12px 10px;border-bottom:1px solid #e2e8f0;color:#0f172a;white-space:nowrap;"><?= $row['direction'] === 'credit' ? e(money($amount)) : '-' ?></td>
                                 <td align="right" style="padding:12px 10px;border-bottom:1px solid #e2e8f0;color:#0f172a;white-space:nowrap;"><?= e(money(abs($running))) ?> <?= $running >= 0 ? 'Alacak' : 'Borç' ?></td>
                             </tr>
                         <?php endforeach; ?>
                         <?php if (!$rows): ?>
-                            <tr><td colspan="5" style="padding:18px 10px;color:#64748b;">Bu dönem için hareket yok.</td></tr>
+                            <tr><td colspan="6" style="padding:18px 10px;color:#64748b;">Bu dönem için hareket yok.</td></tr>
                         <?php endif; ?>
                         </tbody>
                     </table>
@@ -422,7 +424,7 @@ function cari_statement_pdf(array $customer, array $rows, ?string $from, ?string
         'Hazirlayan: ' . $senderName . ' / ' . $senderContact,
         'Toplam Borc: ' . money($debit) . ' | Toplam Alacak/Odeme: ' . money($credit) . ' | Net: ' . money(abs($balance)) . ' ' . ($balance >= 0 ? 'Alacak' : 'Borc'),
         str_repeat('-', 100),
-        'Tarih | Islem / Aciklama | Borc | Alacak | Ara Bakiye',
+        'Tarih | Islem / Aciklama | Vade | Borc | Alacak | Ara Bakiye',
     ];
     $running = 0.0;
     foreach ($rows as $row) {
@@ -432,6 +434,7 @@ function cari_statement_pdf(array $customer, array $rows, ?string $from, ?string
         if (!empty($row['note'])) {
             $line .= ' - ' . $row['note'];
         }
+        $line .= ' | ' . (!empty($row['due_date']) ? tr_date($row['due_date']) : '-');
         $line .= ' | ' . ($row['direction'] === 'debit' ? money($amount) : '-');
         $line .= ' | ' . ($row['direction'] === 'credit' ? money($amount) : '-');
         $line .= ' | ' . money(abs($running)) . ' ' . ($running >= 0 ? 'Alacak' : 'Borc');

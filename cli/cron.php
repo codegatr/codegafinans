@@ -9,7 +9,8 @@
  *   1. Süresi dolmuş abonelikleri "expired" olarak işaretle.
  *   2. TCMB döviz kurlarını yenile.
  *   3. Her kullanıcı için akıllı uyarıları yeniden hesapla.
- *   4. 30 günden eski login_attempts kayıtlarını temizle.
+ *   4. Vadesi gelen cari hareketler için müşteriye hatırlatma maili gönder.
+ *   5. 30 günden eski login_attempts kayıtlarını temizle.
  */
 
 declare(strict_types=1);
@@ -23,6 +24,7 @@ require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/subscription.php';
 require_once __DIR__ . '/../inc/rates.php';
 require_once __DIR__ . '/../inc/finance.php';
+require_once __DIR__ . '/../inc/cari_reminders.php';
 
 $started = microtime(true);
 echo "[" . date('Y-m-d H:i:s') . "] CODEGA Finans cron başladı.\n";
@@ -60,7 +62,15 @@ try {
     echo " ! fin_generate_alerts hata: " . $e->getMessage() . "\n";
 }
 
-// 4) Eski login_attempts kayıtları
+// 4) Cari vade hatırlatma mailleri
+try {
+    $r = cari_send_due_reminders(date('Y-m-d'), 200);
+    echo " - cari_send_due_reminders: {$r['sent']} mail gönderildi, {$r['skipped']} atlandı, {$r['failed']} hata.\n";
+} catch (Throwable $e) {
+    echo " ! cari_send_due_reminders hata: " . $e->getMessage() . "\n";
+}
+
+// 5) Eski login_attempts kayıtları
 try {
     $n = db_exec('DELETE FROM ' . t('login_attempts') . ' WHERE created_at < (NOW() - INTERVAL 30 DAY)');
     echo " - login_attempts temizlendi: {$n} kayıt.\n";

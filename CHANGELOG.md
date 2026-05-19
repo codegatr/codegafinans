@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.21 - 2026-05-19
+
+- Cari borç/alacak hareketlerine zorunlu vade tarihi eklendi.
+- Cari hareket listesi, ekstre HTML/PDF çıktıları vade tarihini gösterecek şekilde güncellendi.
+- Günlük cron görevine, vadesi bugün gelen ve daha önce hatırlatma gönderilmemiş cari hareketler için müşteriye otomatik mail gönderimi eklendi.
+
 ## 1.0.20 - 2026-05-19
 
 - Cari ekstre ve cari rapor PDF çıktılarında metin renginin beyaz kalması nedeniyle boş görünme sorunu düzeltildi.

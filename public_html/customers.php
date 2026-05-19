@@ -226,6 +226,7 @@ function cari_statement_html(array $customer, array $rows, ?string $from, ?strin
                             <tr>
                                 <th align="left" style="padding:11px 10px;background:#f1f5f9;color:#334155;border-bottom:1px solid #e2e8f0;">Tarih</th>
                                 <th align="left" style="padding:11px 10px;background:#f1f5f9;color:#334155;border-bottom:1px solid #e2e8f0;">İşlem / Açıklama</th>
+                                <th align="left" style="padding:11px 10px;background:#f1f5f9;color:#334155;border-bottom:1px solid #e2e8f0;">Vade</th>
                                 <th align="right" style="padding:11px 10px;background:#f1f5f9;color:#334155;border-bottom:1px solid #e2e8f0;">Borç</th>
                                 <th align="right" style="padding:11px 10px;background:#f1f5f9;color:#334155;border-bottom:1px solid #e2e8f0;">Alacak</th>
                                 <th align="right" style="padding:11px 10px;background:#f1f5f9;color:#334155;border-bottom:1px solid #e2e8f0;">Ara Bakiye</th>
@@ -239,13 +240,14 @@ function cari_statement_html(array $customer, array $rows, ?string $from, ?strin
                             <tr>
                                 <td style="padding:12px 10px;border-bottom:1px solid #e2e8f0;color:#0f172a;white-space:nowrap;"><?= e(tr_date($row['tx_date'])) ?></td>
                                 <td style="padding:12px 10px;border-bottom:1px solid #e2e8f0;color:#0f172a;"><strong><?= e($row['title']) ?></strong><?php if ($row['note']): ?><br><span style="color:#64748b;"><?= e($row['note']) ?></span><?php endif; ?></td>
+                                <td style="padding:12px 10px;border-bottom:1px solid #e2e8f0;color:#0f172a;white-space:nowrap;"><?= !empty($row['due_date']) ? e(tr_date($row['due_date'])) : '-' ?></td>
                                 <td align="right" style="padding:12px 10px;border-bottom:1px solid #e2e8f0;color:#0f172a;white-space:nowrap;"><?= $row['direction'] === 'debit' ? e(money($amount)) : '-' ?></td>
                                 <td align="right" style="padding:12px 10px;border-bottom:1px solid #e2e8f0;color:#0f172a;white-space:nowrap;"><?= $row['direction'] === 'credit' ? e(money($amount)) : '-' ?></td>
                                 <td align="right" style="padding:12px 10px;border-bottom:1px solid #e2e8f0;color:#0f172a;white-space:nowrap;"><?= e(money(abs($running))) ?> <?= $running >= 0 ? 'Alacak' : 'Borç' ?></td>
                             </tr>
                         <?php endforeach; ?>
                         <?php if (!$rows): ?>
-                            <tr><td colspan="5" style="padding:18px 10px;color:#64748b;">Bu dönem için hareket yok.</td></tr>
+                            <tr><td colspan="6" style="padding:18px 10px;color:#64748b;">Bu dönem için hareket yok.</td></tr>
                         <?php endif; ?>
                         </tbody>
                     </table>
@@ -422,7 +424,7 @@ function cari_statement_pdf(array $customer, array $rows, ?string $from, ?string
         'Hazirlayan: ' . $senderName . ' / ' . $senderContact,
         'Toplam Borc: ' . money($debit) . ' | Toplam Alacak/Odeme: ' . money($credit) . ' | Net: ' . money(abs($balance)) . ' ' . ($balance >= 0 ? 'Alacak' : 'Borc'),
         str_repeat('-', 100),
-        'Tarih | Islem / Aciklama | Borc | Alacak | Ara Bakiye',
+        'Tarih | Islem / Aciklama | Vade | Borc | Alacak | Ara Bakiye',
     ];
     $running = 0.0;
     foreach ($rows as $row) {
@@ -432,6 +434,7 @@ function cari_statement_pdf(array $customer, array $rows, ?string $from, ?string
         if (!empty($row['note'])) {
             $line .= ' - ' . $row['note'];
         }
+        $line .= ' | ' . (!empty($row['due_date']) ? tr_date($row['due_date']) : '-');
         $line .= ' | ' . ($row['direction'] === 'debit' ? money($amount) : '-');
         $line .= ' | ' . ($row['direction'] === 'credit' ? money($amount) : '-');
         $line .= ' | ' . money(abs($running)) . ' ' . ($running >= 0 ? 'Alacak' : 'Borc');
@@ -606,22 +609,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $amount = money_in($_POST['amount'] ?? 0);
         $title = s($_POST['title'] ?? '', 160);
         $date = s($_POST['tx_date'] ?? '', 10) ?: date('Y-m-d');
+        $dueDate = s($_POST['due_date'] ?? '', 10);
 
-        if ($amount <= 0 || $title === '') {
-            flash('danger', 'Hareket basligi ve pozitif tutar zorunludur.');
+        if ($amount <= 0 || $title === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dueDate)) {
+            flash('danger', 'Hareket başlığı, pozitif tutar ve vade tarihi zorunludur.');
             cari_redirect($customerId);
         }
 
         $mid = db_insert(
             'INSERT INTO ' . t('customer_movements') . '
-                (user_id,customer_id,direction,amount,tx_date,title,note,created_at)
-             VALUES (:u,:c,:d,:a,:dt,:t,:n,NOW())',
+                (user_id,customer_id,direction,amount,tx_date,due_date,title,note,created_at)
+             VALUES (:u,:c,:d,:a,:dt,:du,:t,:n,NOW())',
             [
                 ':u' => $uid,
                 ':c' => $customerId,
                 ':d' => $direction,
                 ':a' => $amount,
                 ':dt' => $date,
+                ':du' => $dueDate,
                 ':t' => $title,
                 ':n' => s($_POST['note'] ?? '', 500) ?: null,
             ]
@@ -934,6 +939,10 @@ require __DIR__ . '/../inc/header.php';
                         <input type="date" name="tx_date" value="<?= e(date('Y-m-d')) ?>" required>
                     </div>
                 </div>
+                <div>
+                    <label>Vade Tarihi</label>
+                    <input type="date" name="due_date" value="<?= e(date('Y-m-d')) ?>" required>
+                </div>
                 <div><label>Açıklama</label><input type="text" name="title" required maxlength="160" placeholder="Örn: Sefer ücreti, tahsilat, ödeme"></div>
                 <input type="hidden" name="note" value="">
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -1006,11 +1015,12 @@ require __DIR__ . '/../inc/header.php';
             <?php else: ?>
             <div class="cf-table-wrap">
                 <table class="cf-table cf-mobile-cards" style="box-shadow:none;border:0;border-radius:0;">
-                    <thead><tr><th>Tarih</th><th>Başlık</th><th>Tür</th><th class="amount">Tutar</th><th></th></tr></thead>
+                    <thead><tr><th>Tarih</th><th>Vade</th><th>Başlık</th><th>Tür</th><th class="amount">Tutar</th><th></th></tr></thead>
                     <tbody>
                     <?php foreach ($movements as $m): ?>
                         <tr>
                             <td data-label="Tarih"><?= tr_date($m['tx_date']) ?></td>
+                            <td data-label="Vade"><?= !empty($m['due_date']) ? tr_date($m['due_date']) : '-' ?><?php if (!empty($m['reminder_sent_at'])): ?><div style="font-size:12px;color:var(--cf-muted);">Mail gönderildi</div><?php endif; ?></td>
                             <td data-label="İşlem"><strong><?= e($m['title']) ?></strong><?php if ($m['note']): ?><div style="font-size:12px;color:var(--cf-muted);"><?= e($m['note']) ?></div><?php endif; ?></td>
                             <td data-label="Tür"><span class="cf-pill <?= $m['direction'] === 'debit' ? 'income' : 'expense' ?>"><?= $m['direction'] === 'debit' ? 'Borç' : 'Alacak' ?></span></td>
                             <td data-label="Tutar" class="amount <?= $m['direction'] === 'debit' ? 'income' : 'expense' ?>"><?= money($m['amount']) ?></td>
