@@ -369,6 +369,7 @@ function cari_pdf_document(string $title, array $lines): string
         $content = "0.95 0.97 1 rg\n0 0 595 842 re f\n";
         $content .= "1 1 1 rg\n34 32 527 778 re f\n";
         $content .= "0.07 0.09 0.16 RG\n2 w\n48 730 499 0 m S\n";
+        $content .= "0.02 0.08 0.18 rg\n";
         $content .= "BT\n/F2 18 Tf\n48 790 Td\n" . cari_pdf_text($title) . " Tj\n";
         $content .= "/F1 9 Tf\n0 -18 Td\n" . cari_pdf_text('Olusturma: ' . date('d.m.Y H:i') . ' | Sayfa ' . ($pageIndex + 1) . '/' . $pageCount) . " Tj\n";
         $content .= "/F1 10 Tf\n0 -34 Td\n";

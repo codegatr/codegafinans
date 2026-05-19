@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.20 - 2026-05-19
+
+- Cari ekstre ve cari rapor PDF çıktılarında metin renginin beyaz kalması nedeniyle boş görünme sorunu düzeltildi.
+
 ## 1.0.19 - 2026-05-19
 
 - Cari Hesaplar ekranına ad, telefon, e-posta ve vergi no üzerinden çalışan arama alanı eklendi.
